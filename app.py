@@ -4,83 +4,120 @@ import plotly.express as px
 import datetime
 
 # ==========================================
-# 1. CẤU HÌNH GIAO DIỆN 3D FLOATING & DARK MODE
+# 1. CẤU HÌNH GIAO DIỆN LIGHT MODE CHUYÊN NGHIỆP
 # ==========================================
 st.set_page_config(page_title="SGM Supply Chain Intel", page_icon="🏥", layout="wide", initial_sidebar_state="expanded")
 
 st.markdown("""
     <style>
     /* Font Montserrat dày dặn, hiện đại */
-    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght=400;500;600;700;800;900&display=swap');
     html, body, [class*="css"] { 
         font-family: 'Montserrat', sans-serif !important; 
     }
 
     /* -----------------------------------
-       1. KHU VỰC MAIN & SIDEBAR (ĐỒNG BỘ NỀN TỐI)
+       1. KHU VỰC MAIN & SIDEBAR (ĐỒNG BỘ NỀN SÁNG)
        ----------------------------------- */
-    .stApp, .main { background-color: #0f172a !important; }
-    .stApp p, .stApp span, div[data-testid="stMarkdownContainer"] { color: #f8fafc !important; }
-    h1, h2, h3, h4, h5, h6 { color: #ffffff !important; font-weight: 800 !important; }
+    .stApp, .main { background-color: #ffffff !important; }
+    .stApp p, .stApp span, div[data-testid="stMarkdownContainer"] { color: #1e293b !important; }
+    h1, h2, h3, h4, h5, h6 { color: #0f172a !important; font-weight: 800 !important; }
 
-    /* Sidebar cùng nền với Main tạo không gian vô cực */
+    /* Sidebar nền xám nhẹ hiện đại */
     [data-testid="stSidebar"] {
-        background-color: #0f172a !important; 
-        border-right: 1px solid #1e293b !important;
+        background-color: #f1f5f9 !important; 
+        border-right: 1px solid #e2e8f0 !important;
     }
     [data-testid="stSidebar"] p, [data-testid="stSidebar"] label { 
-        color: #cbd5e1 !important; 
+        color: #334155 !important; 
         font-weight: 600 !important;
     }
     [data-testid="stSidebar"] h4 { 
-        color: #ffffff !important; 
+        color: #0f172a !important; 
         font-size: 22px !important; 
         font-weight: 900 !important; 
         margin-top: 25px !important;
         margin-bottom: 15px !important;
-        border-bottom: 2px solid #334155;
+        border-bottom: 2px solid #cbd5e1;
         padding-bottom: 10px;
     }
     .copyright-text { font-size: 11px !important; color: #64748b !important; text-align: center; margin-top: -15px; margin-bottom: 25px; font-weight: 500; }
 
-    /* Slider & Multiselect */
-    .stSlider > div > div > div > div { background-color: #334155 !important; }
-    .stSlider > div > div > div > div > div[role="slider"] { background-color: #4ade80 !important; box-shadow: 0 0 10px rgba(74,222,128,0.5) !important; }
-    .stMultiSelect span[data-baseweb="tag"] { background-color: #1e293b !important; border: 1px solid #4ade80 !important; }
-    .stMultiSelect span[data-baseweb="tag"] span { color: #4ade80 !important; font-weight: 700 !important; }
+    /* Loại bỏ phông nền trắng của logo SGM bằng hiệu ứng blend màu */
+    [data-testid="stSidebar"] img {
+        mix-blend-mode: multiply;
+    }
+
+    /* Slider & Multiselect với tone màu Green Pastel */
+    .stSlider > div > div > div > div { background-color: #cbd5e1 !important; }
+    .stSlider > div > div > div > div > div { background-color: #86efac !important; }
+    .stSlider > div > div > div > div > div[role="slider"] { background-color: #22c55e !important; box-shadow: 0 0 10px rgba(34,197,94,0.4) !important; }
+    
+    /* Tùy biến khung nền 3 bộ lọc thành màu Green Pastel */
+    .stMultiSelect div[data-baseweb="select"] {
+        background-color: #f0fdf4 !important; 
+        border: 1px solid #86efac !important;
+        border-radius: 8px !important;
+    }
+    .stMultiSelect div[data-baseweb="select"]:focus-within {
+        border-color: #22c55e !important;
+    }
+    /* Các nút tag đã chọn chuyển thành Green Pastel */
+    .stMultiSelect span[data-baseweb="tag"] { 
+        background-color: #bbf7d0 !important; 
+        border: 1px solid #86efac !important; 
+    }
+    .stMultiSelect span[data-baseweb="tag"] span { 
+        color: #14532d !important; 
+        font-weight: 700 !important; 
+    }
+    .stMultiSelect span[data-baseweb="tag"] svg {
+        fill: #14532d !important;
+    }
 
     /* -----------------------------------
-       2. HIỆU ỨNG THẺ CARD 3D FLOATING
+       2. HIỆU ỨNG THẺ CARD 3D FLOATING (MÀU NGÀ / CAM PASTEL)
        ----------------------------------- */
     div[data-testid="stMetric"] {
-        background: linear-gradient(145deg, #1e293b, #111827) !important; 
+        background: linear-gradient(145deg, #fffdfa, #fdf4e7) !important; 
         border-radius: 20px !important;
         padding: 25px !important;
-        /* Hiệu ứng 3D Shadow: đổ bóng đen sâu bên dưới, hắt sáng mờ viền trên */
-        box-shadow: 10px 15px 30px rgba(0,0,0,0.6), -2px -2px 10px rgba(255,255,255,0.03) !important;
-        border-left: 6px solid #4ade80 !important; 
-        border-top: 1px solid rgba(255,255,255,0.05) !important;
+        /* Đổ bóng 3D mềm mại trên nền sáng */
+        box-shadow: 6px 12px 24px rgba(139,92,26,0.08), -2px -2px 10px rgba(255,255,255,0.8) !important;
+        border-left: 6px solid #fb923c !important; 
+        border-top: 1px solid rgba(251,146,60,0.1) !important;
         transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
     }
     div[data-testid="stMetric"]:hover { 
         transform: translateY(-8px) scale(1.02); 
-        box-shadow: 15px 25px 40px rgba(0,0,0,0.8), -2px -2px 12px rgba(255,255,255,0.05) !important; 
+        box-shadow: 10px 18px 30px rgba(139,92,26,0.12), -2px -2px 12px rgba(255,255,255,0.9) !important; 
     }
-    div[data-testid="stMetric"] label { color: #94a3b8 !important; font-size: 15px !important; text-transform: uppercase; font-weight: 800 !important; letter-spacing: 0.5px; }
-    div[data-testid="stMetric"] div[data-testid="stMetricValue"] { color: #ffffff !important; font-size: 36px !important; font-weight: 900 !important; text-shadow: 2px 2px 5px rgba(0,0,0,0.5); }
+    div[data-testid="stMetric"] label { 
+        color: #c2410c !important; 
+        font-size: 15px !important; 
+        text-transform: uppercase; 
+        font-weight: 800 !important; 
+        letter-spacing: 0.5px; 
+    }
+    div[data-testid="stMetric"] div[data-testid="stMetricValue"] { 
+        color: #1e293b !important; 
+        font-size: 36px !important; 
+        font-weight: 900 !important; 
+        text-shadow: none !important;
+    }
 
-    /* STICKY HERO SECTION TỰ ĐỘNG */
+    /* STICKY HERO SECTION TỰ ĐỘNG TRÊN NỀN SÁNG */
     div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stMetric"]) {
         position: sticky;
         top: 2.8rem;
         z-index: 999;
-        background-color: #0f172a;
+        background-color: #ffffff;
         padding: 10px 0 20px 0;
-        border-bottom: 1px solid #1e293b;
+        border-bottom: 1px solid #e2e8f0;
     }
 
     /* -----------------------------------
-       3. TABS BOLD ĐẬM ĐÀ & BẢNG DỮ LIỆU 3D
+       3. TABS ĐẬM ĐÀ & BẢNG DỮ LIỆU SÁNG
        ----------------------------------- */
     button[data-baseweb="tab"] { 
         font-size: 18px !important; 
@@ -89,29 +126,28 @@ st.markdown("""
         background: transparent; padding: 15px 25px;
     }
     button[aria-selected="true"] { 
-        color: #4ade80 !important; 
-        border-bottom: 4px solid #4ade80 !important; 
-        text-shadow: 0 0 10px rgba(74, 222, 128, 0.2);
+        color: #16a34a !important; 
+        border-bottom: 4px solid #16a34a !important; 
     }
 
     .stDataFrame { 
-        background: linear-gradient(145deg, #1e293b, #111827) !important; 
+        background: #ffffff !important; 
         border-radius: 16px; 
         padding: 10px; 
-        box-shadow: 10px 15px 30px rgba(0,0,0,0.5), -1px -1px 5px rgba(255,255,255,0.02) !important; 
-        border: 1px solid rgba(255,255,255,0.05); 
+        box-shadow: 0 10px 25px rgba(0,0,0,0.05) !important; 
+        border: 1px solid #e2e8f0; 
     }
     
-    .stDownloadButton button { background-color: #388e3c !important; color: white !important; border-radius: 10px !important; font-weight: 800 !important; border: none !important; width: 100%; box-shadow: 0 8px 15px rgba(56,142,60,0.3); transition: all 0.3s ease; }
-    .stDownloadButton button:hover { background-color: #2e7d32 !important; transform: translateY(-3px); box-shadow: 0 12px 20px rgba(56,142,60,0.5); }
+    .stDownloadButton button { background-color: #388e3c !important; color: white !important; border-radius: 10px !important; font-weight: 800 !important; border: none !important; width: 100%; box-shadow: 0 8px 15px rgba(56,142,60,0.2); transition: all 0.3s ease; }
+    .stDownloadButton button:hover { background-color: #2e7d32 !important; transform: translateY(-3px); box-shadow: 0 12px 20px rgba(56,142,60,0.4); }
     
     /* -----------------------------------
-       4. SMART CARDS 3D FLOATING CHUYÊN SÂU
+       4. SMART CARDS PHONG CÁCH LIGHT MODE
        ----------------------------------- */
-    .smart-card-info { background: linear-gradient(145deg, #1e293b, #111827); border-left: 5px solid #3b82f6; padding: 22px; border-radius: 12px; color: #f8fafc; margin-bottom: 18px; box-shadow: 8px 12px 20px rgba(0,0,0,0.4); border-top: 1px solid rgba(255,255,255,0.05); }
-    .smart-card-success { background: linear-gradient(145deg, #1e293b, #111827); border-left: 5px solid #10b981; padding: 22px; border-radius: 12px; color: #f8fafc; margin-bottom: 18px; box-shadow: 8px 12px 20px rgba(0,0,0,0.4); border-top: 1px solid rgba(255,255,255,0.05); }
-    .smart-card-error { background: linear-gradient(145deg, #1e293b, #111827); border-left: 5px solid #ef4444; padding: 22px; border-radius: 12px; color: #f8fafc; margin-bottom: 18px; box-shadow: 8px 12px 20px rgba(0,0,0,0.4); border-top: 1px solid rgba(255,255,255,0.05); }
-    .smart-card-warning { background: linear-gradient(145deg, #1e293b, #111827); border-left: 5px solid #f59e0b; padding: 22px; border-radius: 12px; color: #f8fafc; margin-bottom: 18px; box-shadow: 8px 12px 20px rgba(0,0,0,0.4); border-top: 1px solid rgba(255,255,255,0.05); }
+    .smart-card-info { background: #eff6ff !important; border-left: 5px solid #3b82f6 !important; padding: 22px; border-radius: 12px; color: #1e3a8a !important; margin-bottom: 18px; box-shadow: 0 4px 12px rgba(59,130,246,0.08); border-top: 1px solid rgba(59,130,246,0.1); }
+    .smart-card-success { background: #f0fdf4 !important; border-left: 5px solid #10b981 !important; padding: 22px; border-radius: 12px; color: #14532d !important; margin-bottom: 18px; box-shadow: 0 4px 12px rgba(16,185,129,0.08); border-top: 1px solid rgba(16,185,129,0.1); }
+    .smart-card-error { background: #fef2f2 !important; border-left: 5px solid #ef4444 !important; padding: 22px; border-radius: 12px; color: #7f1d1d !important; margin-bottom: 18px; box-shadow: 0 4px 12px rgba(239,68,68,0.08); border-top: 1px solid rgba(239,68,68,0.1); }
+    .smart-card-warning { background: #fffbeb !important; border-left: 5px solid #f59e0b !important; padding: 22px; border-radius: 12px; color: #78350f !important; margin-bottom: 18px; box-shadow: 0 4px 12px rgba(245,158,11,0.08); border-top: 1px solid rgba(245,158,11,0.1); }
     </style>
 """, unsafe_allow_html=True)
 
@@ -244,9 +280,9 @@ try:
     avg_s2s_global = df['Ton_Kho_SL'].sum() / ((total_daily_sales * 30) + 0.0001) if total_daily_sales > 0 else 0
 
     # --- HERO SECTION TỔNG QUAN ---
-    st.markdown("<h2 style='font-weight: 900; margin-bottom: 5px; color: #f8fafc;'>🏥 SGM SUPPLY CHAIN INTEL</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='font-weight: 900; margin-bottom: 5px; color: #0f172a;'>🏥 SGM SUPPLY CHAIN INTEL</h2>", unsafe_allow_html=True)
     
-    # 4 THẺ NÀY ĐƯỢC CSS TỰ ĐỘNG NHẬN DIỆN LÀM STICKY
+    # 4 THẺ METRIC ĐƯỢC TỰ ĐỘNG NHẬN DIỆN LÀM STICKY TRÊN NỀN TRẮNG
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("TỔNG VỐN TỒN KHO", f"{df['Ton_Kho_Value'].sum():,.0f} ₫")
     m2.metric("MÃ SKU ĐANG LỌC", f"{len(df):,}")
@@ -278,7 +314,7 @@ try:
                 paper_bgcolor='rgba(0,0,0,0)', 
                 plot_bgcolor='rgba(0,0,0,0)',
                 margin=dict(t=50, b=20, l=10, r=10),
-                font=dict(family="Montserrat")
+                font=dict(family="Montserrat", color="#1e293b")
             )
             st.plotly_chart(fig_pie_nganh, use_container_width=True)
             
@@ -294,11 +330,11 @@ try:
                 paper_bgcolor='rgba(0,0,0,0)', 
                 plot_bgcolor='rgba(0,0,0,0)',
                 margin=dict(t=50, b=20, l=10, r=10),
-                font=dict(family="Montserrat")
+                font=dict(family="Montserrat", color="#1e293b")
             )
             st.plotly_chart(fig_pie_hang, use_container_width=True)
             
-        st.markdown("<p style='text-align: center; font-size: 13px; color: #94a3b8;'><i>*Trỏ chuột vào biểu đồ để xem chi tiết tên hãng/ngành và giá trị vốn cụ thể</i></p>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; font-size: 13px; color: #64748b;'><i>*Trỏ chuột vào biểu đồ để xem chi tiết tên hãng/ngành và giá trị vốn cụ thể</i></p>", unsafe_allow_html=True)
 
         st.markdown("<h4 style='font-weight: 800; margin-top: 30px;'>🛒 Danh sách Kế hoạch Dự trù Đặt hàng</h4>", unsafe_allow_html=True)
         
@@ -319,7 +355,7 @@ try:
         
         st.markdown("""
         <div class="smart-card-info">
-            <b style="color:#60a5fa;">ℹ️ CƠ CHẾ DỰ BÁO NGÀY ĐẶT HÀNG (ROP DATE):</b><br>
+            <b style="color:#1d4ed8;">ℹ️ CƠ CHẾ DỰ BÁO NGÀY ĐẶT HÀNG (ROP DATE):</b><br>
             Hệ thống tự động ước lượng <b>Thời điểm chính xác cần xuống đơn PO (Ngày/Tháng/Năm)</b>. ROP Date được hệ thống "dịch chuyển" liên tục dựa vào 3 tham số thiết lập tại menu bên trái: <b>Tốc độ tăng trưởng KH</b>, thời gian <b>Lead Time</b> chở hàng về, và số ngày tồn trữ phòng hờ <b>DOI</b>.
         </div>
         """, unsafe_allow_html=True)
@@ -372,7 +408,7 @@ try:
             plot_bgcolor='rgba(0,0,0,0)', 
             height=500, 
             yaxis=dict(automargin=True),
-            font=dict(family="Montserrat")
+            font=dict(family="Montserrat", color="#1e293b")
         )
         st.plotly_chart(fig_bar, use_container_width=True)
             
@@ -393,7 +429,7 @@ try:
             paper_bgcolor='rgba(0,0,0,0)', 
             plot_bgcolor='rgba(0,0,0,0)', 
             margin=dict(t=30, b=30, l=10, r=10),
-            font=dict(family="Montserrat")
+            font=dict(family="Montserrat", color="#1e293b")
         )
         st.plotly_chart(fig_pie_sales, use_container_width=True)
 
@@ -402,9 +438,9 @@ try:
         
         st.markdown("""
         <div class="smart-card-info">
-            <b style="color:#60a5fa;">💡 CÁCH ĐỌC BẢN ĐỒ NHIỆT:</b><br>
+            <b style="color:#1d4ed8;">💡 CÁCH ĐỌC BẢN ĐỒ NHIỆT:</b><br>
             - <b>Diện tích khối:</b> Đại diện tỷ trọng Tiền (Vốn Tồn Kho).<br>
-            - <b>Màu sắc:</b> <span style="color:#4ade80; font-weight:800;">Xanh lá (Hợp lý)</span> | <span style="color:#fbbf24; font-weight:800;">Cam (Nguy cơ thiếu)</span> | <span style="color:#f87171; font-weight:800;">Đỏ tươi (Chậm luân chuyển)</span>.
+            - <b>Màu sắc:</b> <span style="color:#15803d; font-weight:800;">Xanh lá (Hợp lý)</span> | <span style="color:#b45309; font-weight:800;">Cam (Nguy cơ thiếu)</span> | <span style="color:#b91c1c; font-weight:800;">Đỏ tươi (Chậm luân chuyển)</span>.
         </div>
         """, unsafe_allow_html=True)
 
@@ -418,7 +454,7 @@ try:
             
             st.markdown(f"""
             <div class="smart-card-success">
-                <b style="color:#34d399;">📊 ĐÁNH GIÁ TỆP KHÁCH HÀNG:</b> Nhóm khách hàng này tiêu thụ <b>{len(df_tab3)} mã SKU</b>, tổng vốn lưu trữ là <b>{df_tab3['Ton_Kho_Value'].sum():,.0f} ₫</b>.
+                <b style="color:#15803d;">📊 ĐÁNH GIÁ TỆP KHÁCH HÀNG:</b> Nhóm khách hàng này tiêu thụ <b>{len(df_tab3)} mã SKU</b>, tổng vốn lưu trữ là <b>{df_tab3['Ton_Kho_Value'].sum():,.0f} ₫</b>.
             </div>
             """, unsafe_allow_html=True)
         
@@ -430,12 +466,12 @@ try:
                 color='Canh_Bao_S2S',
                 color_discrete_map={"⚠️ Chậm luân chuyển": "#ef4444", "🔥 Rủi ro thiếu hàng": "#f59e0b", "✅ Hợp lý": "#10b981"}
             )
-            fig_treemap.update_traces(root_color="#1e293b")
+            fig_treemap.update_traces(root_color="#f1f5f9")
             fig_treemap.update_layout(
                 paper_bgcolor='rgba(0,0,0,0)', 
                 plot_bgcolor='rgba(0,0,0,0)', 
                 margin=dict(t=30, l=10, r=10, b=10),
-                font=dict(family="Montserrat")
+                font=dict(family="Montserrat", color="#1e293b")
             )
             st.plotly_chart(fig_treemap, use_container_width=True)
         else:
@@ -460,7 +496,7 @@ try:
             fig_risk.update_layout(
                 paper_bgcolor='rgba(0,0,0,0)', 
                 plot_bgcolor='rgba(0,0,0,0)',
-                font=dict(family="Montserrat")
+                font=dict(family="Montserrat", color="#1e293b")
             )
             st.plotly_chart(fig_risk, use_container_width=True)
             
@@ -469,7 +505,7 @@ try:
                 use_container_width=True
             )
         else: 
-            st.markdown("<div class='smart-card-success'><b style='color:#34d399;'>✅ TRẠNG THÁI AN TOÀN:</b> Không ghi nhận rủi ro cận hạn.</div>", unsafe_allow_html=True)
+            st.markdown("<div class='smart-card-success'><b style='color:#15803d;'>✅ TRẠNG THÁI AN TOÀN:</b> Không ghi nhận rủi ro cận hạn.</div>", unsafe_allow_html=True)
 
     with tab5:
         st.markdown("<h3 style='font-weight: 800;'>🔍 Tra cứu chi tiết & Đề xuất AI</h3>", unsafe_allow_html=True)
@@ -493,19 +529,19 @@ try:
             st.markdown("<h4 style='font-weight: 800; margin-top: 30px; margin-bottom: 20px;'>🧠 ENGINE ĐỀ XUẤT ĐIỀU PHỐI</h4>", unsafe_allow_html=True)
             
             if sku_data['Trang_Thai'] == "🔴 ĐỨT HÀNG": 
-                st.markdown(f"<div class='smart-card-error'><b style='color:#f87171;'>🚨 BÁO ĐỘNG ĐỨT HÀNG:</b> Tồn hiện tại thấp hơn Lead Time. Mua ngay <b>{sku_data['De_Xuat_Mua']:,.0f}</b> đơn vị. Hạn cuối: <b>{sku_data['Ngay_Dat_Hang_Du_Kien']}</b>.</div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='smart-card-error'><b style='color:#b91c1c;'>🚨 BÁO ĐỘNG ĐỨT HÀNG:</b> Tồn hiện tại thấp hơn Lead Time. Mua ngay <b>{sku_data['De_Xuat_Mua']:,.0f}</b> đơn vị. Hạn cuối: <b>{sku_data['Ngay_Dat_Hang_Du_Kien']}</b>.</div>", unsafe_allow_html=True)
             elif sku_data['Trang_Thai'] == "🟡 CẦN NHẬP": 
-                st.markdown(f"<div class='smart-card-warning'><b style='color:#fbbf24;'>⚠️ KẾ HOẠCH NHẬP:</b> Đã chạm ngưỡng ROP. Bổ sung <b>{sku_data['De_Xuat_Mua']:,.0f}</b> đơn vị trước ngày <b>{sku_data['Ngay_Dat_Hang_Du_Kien']}</b>.</div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='smart-card-warning'><b style='color:#b45309;'>⚠️ KẾ HOẠCH NHẬP:</b> Đã chạm ngưỡng ROP. Bổ sung <b>{sku_data['De_Xuat_Mua']:,.0f}</b> đơn vị trước ngày <b>{sku_data['Ngay_Dat_Hang_Du_Kien']}</b>.</div>", unsafe_allow_html=True)
             else: 
-                st.markdown(f"<div class='smart-card-success'><b style='color:#34d399;'>🟢 AN TOÀN:</b> Chưa cần nhập thêm. Dự kiến đến <b>{sku_data['Ngay_Dat_Hang_Du_Kien']}</b> mới cần lên đơn.</div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='smart-card-success'><b style='color:#15803d;'>🟢 AN TOÀN:</b> Chưa cần nhập thêm. Dự kiến đến <b>{sku_data['Ngay_Dat_Hang_Du_Kien']}</b> mới cần lên đơn.</div>", unsafe_allow_html=True)
                 
             if sku_data['S2S_Months'] > 6: 
-                st.markdown(f"<div class='smart-card-error'><b style='color:#f87171;'>📦 ĐỌNG VỐN:</b> S2S đạt <b>{sku_data['S2S_Months']:.1f} tháng</b>. Rà soát Sale hoặc ngưng nhập.</div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='smart-card-error'><b style='color:#b91c1c;'>📦 ĐỌNG VỐN:</b> S2S đạt <b>{sku_data['S2S_Months']:.1f} tháng</b>. Rà soát Sale hoặc ngưng nhập.</div>", unsafe_allow_html=True)
             elif sku_data['S2S_Months'] < 1 and sku_data['Daily_Sales'] > 0: 
-                st.markdown("<div class='smart-card-warning'><b style='color:#fbbf24;'>🔥 ÁP LỰC TIÊU THỤ LỚN:</b> Vòng quay kho dưới 1 tháng. Cần nâng DOI.</div>", unsafe_allow_html=True)
+                st.markdown("<div class='smart-card-warning'><b style='color:#b45309;'>🔥 ÁP LỰC TIÊU THỤ LỚN:</b> Vòng quay kho dưới 1 tháng. Cần nâng DOI.</div>", unsafe_allow_html=True)
                 
             if sku_data['Het_HSD_Value'] > 0: 
-                st.markdown(f"<div class='smart-card-error'><b style='color:#f87171;'>🚩 RỦI RO HSD:</b> Thiệt hại dự kiến <b>{sku_data['Het_HSD_Value']:,.0f} ₫</b>. Áp dụng FEFO ngay.</div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='smart-card-error'><b style='color:#b91c1c;'>🚩 RỦI RO HSD:</b> Thiệt hại dự kiến <b>{sku_data['Het_HSD_Value']:,.0f} ₫</b>. Áp dụng FEFO ngay.</div>", unsafe_allow_html=True)
 
 except Exception as e:
     st.error(f"Lỗi hệ thống nội bộ: {e}")
