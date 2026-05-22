@@ -1,109 +1,88 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 
 # ==========================================
-# 1. CẤU HÌNH GIAO DIỆN SGM MEDICAL TECH (PASTEL GREEN & FLOATING UI)
+# 1. CẤU HÌNH GIAO DIỆN MODERN TECH SGM
 # ==========================================
 st.set_page_config(page_title="SGM Supply Chain Intel", page_icon="🏥", layout="wide", initial_sidebar_state="expanded")
 
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-    
-    html, body, [class*="css"] {
-        font-family: 'Inter', sans-serif !important;
+    /* Font Inter hiện đại */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
+    html, body, [class*="css"] { font-family: 'Inter', sans-serif !important; }
+
+    /* Nền tổng thể */
+    .main { background-color: #f0f2f6; }
+
+    /* SIDEBAR (MENU BỘ LỌC) */
+    [data-testid="stSidebar"] {
+        background-color: #f8f9fa !important;
+        border-right: 1px solid #e9ecef !important;
+        box-shadow: 2px 0 10px rgba(0,0,0,0.05);
     }
     
-    .main { background-color: #f4f7f9; }
-    
-    /* -----------------------------------
-       HIỆU ỨNG THẺ METRIC (HERO SECTION) 
-       ----------------------------------- */
+    /* Chữ bản quyền dưới Logo */
+    .copyright-text {
+        font-size: 11px;
+        color: #9e9e9e;
+        text-align: center;
+        margin-top: -15px;
+        margin-bottom: 20px;
+        font-weight: 400;
+    }
+
+    /* CARD STYLE HERO SECTION (Shadow + Pastel Green) */
     div[data-testid="stMetric"] {
-        background-color: #f1f8e9 !important; /* Màu xanh pastel nhẹ nhàng */
-        border-radius: 16px;
-        padding: 20px;
-        box-shadow: 0 8px 16px rgba(56, 142, 60, 0.2) !important; /* Shadow xanh lá */
+        background-color: #e8f5e9 !important; /* Green Pastel nhẹ */
+        border-radius: 16px !important;
+        padding: 24px !important;
+        box-shadow: 0 8px 20px rgba(56,142,60,0.15) !important;
         border-left: 6px solid #388e3c !important; 
         transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
-    div[data-testid="stMetric"]:hover { 
-        transform: translateY(-8px); 
-        box-shadow: 0 12px 24px rgba(56, 142, 60, 0.4) !important; /* Shadow đậm hơn khi hover */
+    div[data-testid="stMetric"]:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 25px rgba(56,142,60,0.25) !important;
     }
-    /* In đậm tiêu đề thẻ Metric */
-    div[data-testid="stMetric"] label {
-        font-weight: 800 !important;
-        font-size: 16px !important;
-        color: #2e7d32 !important;
-    }
-    div[data-testid="stMetric"] div[data-testid="stMetricValue"] {
-        color: #1b5e20 !important;
-        font-weight: 800 !important;
-    }
-    
-    /* -----------------------------------
-       HIỆU ỨNG TABS (FLOATING TABS)
-       ----------------------------------- */
+    div[data-testid="stMetric"] label { font-weight: 800 !important; font-size: 15px !important; color: #2e7d32 !important; }
+    div[data-testid="stMetric"] div[data-testid="stMetricValue"] { color: #1b5e20 !important; font-weight: 800 !important; }
+
+    /* TABS STYLE NỔI BẬT */
     button[data-baseweb="tab"] { 
-        font-size: 18px !important; 
+        font-size: 17px !important; 
         font-weight: 700 !important; 
-        color: #757575 !important; 
-        background-color: #ffffff;
-        border-radius: 12px 12px 0 0;
-        margin-right: 6px;
-        padding: 12px 24px;
-        box-shadow: 0px -2px 8px rgba(56, 142, 60, 0.1);
-        transition: all 0.3s ease;
-    }
-    button[data-baseweb="tab"]:hover {
-        color: #388e3c !important;
-        background-color: #f8fbf8;
+        color: #757575 !important;
+        background: #ffffff;
+        border-radius: 10px 10px 0 0;
+        margin-right: 5px;
+        padding: 10px 20px;
+        box-shadow: 0px -2px 8px rgba(0,0,0,0.04);
     }
     button[aria-selected="true"] { 
         color: #2e7d32 !important; 
-        background-color: #e8f5e9 !important; /* Tab đang chọn sáng màu pastel */
-        border-bottom-color: #2e7d32 !important; 
-        box-shadow: 0px -6px 15px rgba(56, 142, 60, 0.35) !important; /* Shadow xanh nổi bật */
-        transform: translateY(-2px);
-    }
-    
-    /* -----------------------------------
-       MENU SIDEBAR & BỘ LỌC (IN ĐẬM + PASTEL)
-       ----------------------------------- */
-    [data-testid="stSidebar"] { 
-        background-color: #ffffff; 
-        border-right: 1px solid #e0e0e0; 
-    }
-    /* In đậm các nhãn bộ lọc và thanh trượt */
-    [data-testid="stSidebar"] label {
-        font-weight: 700 !important;
-        font-size: 15px !important;
-        color: #1b5e20 !important;
-    }
-    /* Đổi màu slider sang xanh pastel */
-    .stSlider > div > div > div > div { background-color: #a5d6a7 !important; }
-    .stSlider > div > div > div > div > div[role="slider"] { 
-        background-color: #388e3c !important; 
-        box-shadow: 0 0 8px rgba(56, 142, 60, 0.5) !important; 
-    }
-    /* Đổi màu MultiSelect Tags */
-    .stMultiSelect span[data-baseweb="tag"] {
         background-color: #e8f5e9 !important;
-        color: #2e7d32 !important;
-        font-weight: 700;
-        border: 1px solid #a5d6a7;
+        border-bottom: 3px solid #388e3c !important; 
+        box-shadow: 0px -4px 12px rgba(56,142,60,0.2) !important;
     }
     
-    /* Nút Download */
+    /* BẢNG DỮ LIỆU & NÚT DOWNLOAD */
+    .stDataFrame { border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
     .stDownloadButton button { background-color: #388e3c !important; color: white !important; border-radius: 8px !important; font-weight: 700; border: none !important; width: 100%; box-shadow: 0 4px 6px rgba(56,142,60,0.3); }
     .stDownloadButton button:hover { background-color: #2e7d32 !important; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(56,142,60,0.4); }
+    
+    /* CẤU TRÚC SMART CARD (THẺ ĐỀ XUẤT THÔNG MINH) */
+    .smart-card-info { background-color: #e3f2fd; border-left: 5px solid #1976d2; padding: 16px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); margin-bottom: 12px; }
+    .smart-card-warning { background-color: #fff3e0; border-left: 5px solid #f57c00; padding: 16px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); margin-bottom: 12px; }
+    .smart-card-error { background-color: #ffebee; border-left: 5px solid #d32f2f; padding: 16px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); margin-bottom: 12px; }
+    .smart-card-success { background-color: #e8f5e9; border-left: 5px solid #388e3c; padding: 16px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); margin-bottom: 12px; }
     </style>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 2. HỆ THỐNG XỬ LÝ DỮ LIỆU TỰ ĐỘNG CẬP NHẬT
+# 2. HỆ THỐNG XỬ LÝ DỮ LIỆU BỌC THÉP (TTL 10 PHÚT)
 # ==========================================
 @st.cache_data(ttl=600)
 def load_data():
@@ -170,21 +149,21 @@ def load_data():
     return df, customer_mapping
 
 # ==========================================
-# 3. GIAO DIỆN CHÍNH & THUẬT TOÁN ĐỀ XUẤT
+# 3. GIAO DIỆN CHÍNH & THUẬT TOÁN
 # ==========================================
 try:
     df_full, customer_mapping = load_data()
     
-    # --- SIDEBAR CONTROLS ---
+    # --- SIDEBAR MENU ---
     st.sidebar.image("https://raw.githubusercontent.com/vic-techSGM/sgm-supplychain/main/logo.png", use_container_width=True)
-    st.sidebar.markdown("---")
+    st.sidebar.markdown("<div class='copyright-text'>Build & Developed by Vic Fan.<br>Copyrights reserved. Version 01.26.05</div>", unsafe_allow_html=True)
     
-    st.sidebar.header("⚙️ Tham số Chuỗi cung ứng")
-    doi_target = st.sidebar.slider("DOI - Tồn kho mục tiêu (Ngày)", 15, 120, 45)
-    lead_time = st.sidebar.slider("Lead Time - Thời gian nhập hàng (Ngày)", 10, 90, 30)
-    customer_growth = st.sidebar.slider("Kỳ vọng tăng trưởng KH theo Quý (%)", 0, 100, 15)
+    st.sidebar.markdown("<h4 style='color:#388e3c; font-weight:800;'>⚙️ CẤU HÌNH HỆ THỐNG</h4>", unsafe_allow_html=True)
+    doi_target = st.sidebar.slider("📅 DOI (Ngày an toàn)", 15, 120, 45)
+    lead_time = st.sidebar.slider("⏱️ Lead Time (Ngày nhập)", 10, 90, 30)
+    customer_growth = st.sidebar.slider("📈 Tăng trưởng KH Quý (%)", 0, 100, 15)
     
-    st.sidebar.header("📂 Bộ lọc Dữ liệu")
+    st.sidebar.markdown("<h4 style='color:#388e3c; font-weight:800; margin-top:20px;'>📂 BỘ LỌC DỮ LIỆU</h4>", unsafe_allow_html=True)
     list_nganh = df_full['Nganh_Hang'].unique().tolist()
     selected_nganh = st.sidebar.multiselect("1. Ngành hàng", list_nganh, default=list_nganh)
     
@@ -196,9 +175,10 @@ try:
     list_hang = df_f2['Hang'].unique().tolist()
     selected_hang = st.sidebar.multiselect("3. Hãng cung cấp", list_hang, default=list_hang)
 
+    # Dữ liệu sau lọc
     df = df_f2[df_f2['Hang'].isin(selected_hang)].copy()
     
-    # --- THUẬT TOÁN PHÂN TÍCH TỒN KHO AN TOÀN ---
+    # --- THUẬT TOÁN TÍNH TOÁN ---
     growth_factor = 1 + (customer_growth / 100)
     df['Daily_Sales'] = (df['Xuat_Ban_SL'] / 150) * growth_factor 
     df['S2S_Months'] = df['Ton_Kho_SL'] / ((df['Daily_Sales'] * 30) + 0.0001)
@@ -225,20 +205,20 @@ try:
     avg_s2s_global = df['Ton_Kho_SL'].sum() / ((total_daily_sales * 30) + 0.0001) if total_daily_sales > 0 else 0
 
     # --- HERO SECTION ---
-    st.title("🏥 Hệ thống Quản trị Cung ứng SGM")
+    st.markdown("<h2 style='font-weight: 800; color: #1b5e20;'>🏥 SGM SUPPLY CHAIN INTEL</h2>", unsafe_allow_html=True)
     
     m1, m2, m3, m4 = st.columns(4)
-    m1.metric("TỔNG VỐN TỒN KHO", f"{df['Ton_Kho_Value'].sum():,.0f} ₫")
-    m2.metric("TỔNG MÃ SKU (ĐANG LỌC)", f"{len(df):,}")
-    m3.metric("S2S BÌNH QUÂN", f"{avg_s2s_global:.1f} Tháng")
-    m4.metric("TỔNG KH ACTIVE", f"{int(df['Khach_Hang_Active'].sum()):,}")
+    m1.metric("💰 TỔNG VỐN TỒN KHO", f"{df['Ton_Kho_Value'].sum():,.0f} ₫")
+    m2.metric("📦 MÃ SKU ĐANG LỌC", f"{len(df):,}")
+    m3.metric("🔥 S2S BÌNH QUÂN", f"{avg_s2s_global:.1f} Tháng")
+    m4.metric("👥 KHÁCH HÀNG ACTIVE", f"{int(df['Khach_Hang_Active'].sum()):,}")
 
     # --- ĐIỀU HƯỚNG TABS ---
     st.markdown("<br>", unsafe_allow_html=True)
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "📋 KẾ HOẠCH ĐẶT HÀNG", 
         "🔥 PHÂN LOẠI BÁN CHẠY", 
-        "👥 BẢN ĐỒ S2S", 
+        "👥 KHÁCH HÀNG THEO SKU", 
         "🚩 RỦI RO HẠN DÙNG",
         "🔍 TRA CỨU ĐỀ XUẤT"
     ])
@@ -268,60 +248,92 @@ try:
         )
 
     with tab2:
-        st.subheader("🔥 Top 20 SKU Bán Chạy Nhất (Theo Sản Lượng)")
-        # Lấy top 20, sắp xếp tăng dần để Plotly vẽ từ trên xuống dưới cho biểu đồ ngang
+        st.markdown("<h3 style='font-weight: 700;'>🔥 Top 20 SKU Bán Chạy Nhất (Theo Sản Lượng)</h3>", unsafe_allow_html=True)
+        
+        # Lấy top 20, sắp xếp tăng dần để vẽ nằm ngang từ trên xuống
         top_sku = df.sort_values(by='Xuat_Ban_SL', ascending=True).tail(20)
         
-        # Biểu đồ cột ngang (Horizontal Bar Chart)
+        # Vẽ biểu đồ ngang, màu sắc Pantone Xanh Pastel (Blues)
         fig_bar = px.bar(
             top_sku, 
             x='Xuat_Ban_SL', 
             y='SKU', 
             orientation='h', 
-            color='Hang', 
+            color='Xuat_Ban_SL', # Tự động đổ màu gradient theo giá trị
+            color_continuous_scale="Blues", # Thang màu Pantone Pastel Blue
             text='Xuat_Ban_SL',
-            labels={'Xuat_Ban_SL': 'Tổng lượng xuất bán', 'SKU': 'Mã SKU'},
-            color_discrete_sequence=px.colors.qualitative.Pastel
+            labels={'Xuat_Ban_SL': 'Sản Lượng Phân Phối', 'SKU': 'Mã SKU'}
         )
-        fig_bar.update_traces(texttemplate='%{text:,.0f}', textposition='outside', marker_line_width=0)
+        
+        # Bo cong góc thanh Bar (Cập nhật Plotly mới nhất) và ẩn thanh thang màu
+        fig_bar.update_traces(
+            texttemplate='%{text:,.0f}', 
+            textposition='outside', 
+            marker_line_width=0,
+            marker=dict(cornerradius=10) # Bo góc thanh bar
+        )
         fig_bar.update_layout(
+            coloraxis_showscale=False, # Ẩn cột màu bên cạnh cho giao diện clean
             plot_bgcolor='rgba(0,0,0,0)',
-            xaxis_title="Sản lượng xuất bán",
+            xaxis_title="Sản lượng xuất bán (Chiều ngang)",
             yaxis_title="Mã SKU",
-            height=600 # Tăng chiều cao để các thanh hiển thị thoáng hơn
+            height=650 
         )
         st.plotly_chart(fig_bar, use_container_width=True)
 
     with tab3:
-        st.subheader("🔍 Bản đồ Tồn kho S2S & Tra cứu theo Khách hàng")
+        st.markdown("<h3 style='font-weight: 700;'>🔍 Khách hàng theo SKU (Bản đồ Nhiệt S2S)</h3>", unsafe_allow_html=True)
+        
+        # Thẻ Hướng Dẫn UI
+        st.markdown("""
+        <div class="smart-card-info">
+            <b style="color:#0d47a1; font-size: 16px;">💡 CÁCH ĐỌC BẢN ĐỒ NHIỆT (TREEMAP):</b><br>
+            <span style="color:#1565c0; font-size: 14px;">
+            - <b>Kích thước Khối hộp:</b> Đại diện cho lượng Tiền/Vốn tồn kho. Hộp càng to, tiền đọng càng lớn.<br>
+            - <b>Màu sắc:</b> <span style="color:#2e7d32; font-weight:bold;">Xanh (Hợp lý)</span> | <span style="color:#e65100; font-weight:bold;">Cam (Nguy cơ đứt hàng)</span> | <span style="color:#c62828; font-weight:bold;">Đỏ (Tồn kho quá lâu - Trượt vòng quay vốn)</span>.
+            </span>
+        </div>
+        """, unsafe_allow_html=True)
+
         list_kh = sorted(customer_mapping['Khach_Hang'].unique().tolist())
-        selected_kh = st.multiselect("Tìm kiếm SKU theo Khách hàng (Có thể chọn nhiều):", list_kh)
+        selected_kh = st.multiselect("Gõ tên để tìm kiếm Khách Hàng (Hỗ trợ chọn nhiều):", list_kh)
         
         df_tab3 = df.copy()
         if selected_kh:
             skus_of_kh = customer_mapping[customer_mapping['Khach_Hang'].isin(selected_kh)]['SKU'].unique()
             df_tab3 = df[df['SKU'].isin(skus_of_kh)]
-            st.success(f"Đã lọc ra {len(df_tab3)} Mã SKU liên quan đến khách hàng đã chọn.")
+            
+            # Giải thích thông minh tự động khi chọn Khách Hàng
+            tong_von_kh = df_tab3['Ton_Kho_Value'].sum()
+            so_ma_kh = len(df_tab3)
+            st.markdown(f"""
+            <div class="smart-card-success">
+                <b style="color:#1b5e20;">📊 KẾT QUẢ ĐÁNH GIÁ TỆP KHÁCH HÀNG:</b><br>
+                <span style="color:#2e7d32;">
+                Tệp khách hàng bạn vừa chọn đang liên đới tới <b>{so_ma_kh} mã SKU</b>, với tổng dòng vốn lưu kho phục vụ trực tiếp là <b>{tong_von_kh:,.0f} VNĐ</b>. Hãy xem Bản đồ nhiệt bên dưới để rà soát xem có khối màu đỏ nào (hàng tồn kho lâu) đang bị kẹt tại nhóm khách này không.
+                </span>
+            </div>
+            """, unsafe_allow_html=True)
         
         if not df_tab3.empty and df_tab3['Ton_Kho_Value'].sum() > 0:
             fig_treemap = px.treemap(
                 df_tab3[df_tab3['Ton_Kho_Value'] > 0],
-                path=[px.Constant("TỔNG TỒN KHO S2S"), 'Canh_Bao_S2S', 'Hang', 'SKU'],
+                path=[px.Constant("TỔNG TỒN KHO"), 'Canh_Bao_S2S', 'Hang', 'SKU'],
                 values='Ton_Kho_Value', color='Canh_Bao_S2S',
-                color_discrete_map={"⚠️ Chậm luân chuyển": "#d32f2f", "🔥 Rủi ro thiếu hàng": "#f57c00", "✅ Hợp lý": "#388e3c"}
+                color_discrete_map={"⚠️ Chậm luân chuyển": "#ef5350", "🔥 Rủi ro thiếu hàng": "#ff9800", "✅ Hợp lý": "#66bb6a"}
             )
-            fig_treemap.update_traces(root_color="lightgrey")
+            fig_treemap.update_traces(root_color="#f8f9fa")
             fig_treemap.update_layout(margin=dict(t=30, l=10, r=10, b=10))
             st.plotly_chart(fig_treemap, use_container_width=True)
         else:
-            st.warning("Không có dữ liệu tồn kho để vẽ bản đồ cho khách hàng này.")
+            st.warning("Không có dữ liệu vốn tồn kho để khởi tạo Bản đồ nhiệt.")
 
     with tab4:
-        st.subheader("🚩 Cảnh báo Hàng Cận/Hết Hạn và Đánh giá Thiệt hại")
+        st.markdown("<h3 style='font-weight: 700;'>🚩 Cảnh báo Hàng Cận/Hết Hạn (FEFO)</h3>", unsafe_allow_html=True)
         risk_df = df[df['Het_HSD_Value'] > 0].copy()
         total_risk = risk_df['Het_HSD_Value'].sum()
         
-        st.metric(label="🚨 TỔNG GIÁ TRỊ THIỆT HẠI DỰ KIẾN (Đang lọc)", value=f"{total_risk:,.0f} ₫")
+        st.metric(label="🚨 TỔNG GIÁ TRỊ THIỆT HẠI DỰ KIẾN (Theo Lọc)", value=f"{total_risk:,.0f} ₫")
         
         if total_risk > 0:
             fig_risk = px.bar(
@@ -329,7 +341,7 @@ try:
                 labels={'SKU': 'Mã SKU', 'Het_HSD_Value': 'Giá trị thiệt hại (₫)'},
                 color_discrete_sequence=px.colors.qualitative.Set3
             )
-            fig_risk.update_traces(texttemplate='%{text:,.0f}', textposition='outside', marker_line_width=0)
+            fig_risk.update_traces(texttemplate='%{text:,.0f}', textposition='outside', marker_line_width=0, marker=dict(cornerradius=5))
             st.plotly_chart(fig_risk, use_container_width=True)
             
             st.markdown("#### 📋 Danh sách chi tiết SKU cận/hết hạn sử dụng")
@@ -337,16 +349,15 @@ try:
             risk_display.columns = ['Mã SKU', 'Hãng Cung Cấp', 'Số Lượng Tồn', 'Giá Trị Mất Đi (VNĐ)']
             st.dataframe(risk_display.sort_values(by='Giá Trị Mất Đi (VNĐ)', ascending=False), use_container_width=True)
         else:
-            st.success("Hệ thống ghi nhận không có rủi ro cận hạn hoặc hết hạn đối với nhóm danh mục đang chọn.")
+            st.markdown("<div class='smart-card-success'><b style='color:#1b5e20;'>✅ AN TOÀN:</b> Hệ thống ghi nhận không có rủi ro cận hạn hoặc hết hạn đối với nhóm danh mục đang chọn.</div>", unsafe_allow_html=True)
 
     with tab5:
-        st.subheader("🔍 Tra cứu chi tiết thông số & Đề xuất thông minh")
-        selected_sku = st.selectbox("Gõ hoặc chọn Mã SKU cần kiểm tra:", df['SKU'].unique())
+        st.markdown("<h3 style='font-weight: 700;'>🔍 Tra cứu chi tiết & Đề xuất AI</h3>", unsafe_allow_html=True)
+        selected_sku = st.selectbox("Gõ hoặc chọn Mã SKU cần phân tích:", df['SKU'].unique())
         
         if selected_sku:
             sku_data = df[df['SKU'] == selected_sku].iloc[0]
             
-            st.markdown("### 📋 Thông tin danh mục sản phẩm")
             c_desc1, c_desc2, c_desc3 = st.columns(3)
             c_desc1.info(f"**📂 Ngành hàng:**\n\n {sku_data['Nganh_Hang']}")
             c_desc2.info(f"**🔬 Chủng loại:**\n\n {sku_data['Chung_Loai']}")
@@ -360,27 +371,22 @@ try:
             c3.metric("Số KH Active", int(sku_data['Khach_Hang_Active']))
             c4.metric("Tháng tồn (S2S)", f"{sku_data['S2S_Months']:.1f} Tháng")
             
-            st.markdown("### 🧠 Đề xuất điều phối thông minh từ hệ thống")
-            
-            recommendations = []
+            st.markdown("<h4 style='font-weight: 700; margin-top: 20px;'>🧠 Đề xuất điều phối từ Hệ thống AI</h4>", unsafe_allow_html=True)
             
             if sku_data['Trang_Thai'] == "🔴 ĐỨT HÀNG":
-                recommendations.append(f"🚨 **CẢNH BÁO KHẨN CẤP:** Số lượng tồn kho hiện tại thấp hơn mức thời gian nhập hàng an toàn (Lead Time: {lead_time} ngày). Yêu cầu phòng mua hàng phát hành ngay đơn PO với số lượng **{sku_data['De_Xuat_Mua']:,.0f}** để tránh làm đứt gãy dịch vụ.")
+                st.markdown(f"<div class='smart-card-error'><b style='color:#c62828;'>🚨 CẢNH BÁO KHẨN CẤP (ĐỨT HÀNG):</b><br><span style='color:#d32f2f;'>Số lượng tồn kho hiện tại thấp hơn mức an toàn Lead Time. Yêu cầu phòng mua hàng phát hành ngay đơn PO với số lượng <b>{sku_data['De_Xuat_Mua']:,.0f}</b> để bảo vệ chuỗi cung ứng.</span></div>", unsafe_allow_html=True)
             elif sku_data['Trang_Thai'] == "🟡 CẦN NHẬP":
-                recommendations.append(f"⚠️ **KẾ HOẠCH NHẬP BỔ SUNG:** Mặt hàng đang nằm dưới điểm đặt hàng lại (ROP). Khuyến nghị bổ sung mua **{sku_data['De_Xuat_Mua']:,.0f}** sản phẩm trong đợt gom đơn tuần này để đảm bảo chỉ số DOI mục tiêu.")
+                st.markdown(f"<div class='smart-card-warning'><b style='color:#e65100;'>⚠️ KẾ HOẠCH NHẬP BỔ SUNG:</b><br><span style='color:#f57c00;'>Mặt hàng đang nằm dưới điểm đặt hàng lại (ROP). Khuyến nghị bổ sung mua <b>{sku_data['De_Xuat_Mua']:,.0f}</b> sản phẩm trong đợt gom đơn tuần này.</span></div>", unsafe_allow_html=True)
             else:
-                recommendations.append("🟢 **TỒN KHO AN TOÀN:** Mức trữ lượng hiện tại đủ cung ứng tốt trong chu kỳ vận hành đã thiết lập.")
+                st.markdown("<div class='smart-card-success'><b style='color:#1b5e20;'>🟢 TỒN KHO AN TOÀN:</b><br><span style='color:#2e7d32;'>Mức trữ lượng hiện tại đáp ứng cực tốt chu kỳ vận hành đã thiết lập.</span></div>", unsafe_allow_html=True)
                 
             if sku_data['S2S_Months'] > 6:
-                recommendations.append(f"📦 **RỦI RO ĐỌNG VỐN CAO:** Chỉ số Stock-to-Sales đạt {sku_data['S2S_Months']:.1f} tháng (vượt ngưỡng an toàn 6 tháng). Đề xuất rà soát lại tệp khách hàng, triển khai các chương trình giải phóng hàng tồn hoặc hạn chế nhập mới mã hàng này.")
+                st.markdown(f"<div class='smart-card-error'><b style='color:#c62828;'>📦 RỦI RO ĐỌNG VỐN (S2S):</b><br><span style='color:#d32f2f;'>Chỉ số Stock-to-Sales đạt {sku_data['S2S_Months']:.1f} tháng (vượt ngưỡng 6 tháng). Đề xuất Sale rà soát khách hàng, tổ chức xúc tiến bán hoặc ngưng nhập liệu mã này.</span></div>", unsafe_allow_html=True)
             elif sku_data['S2S_Months'] < 1 and sku_data['Daily_Sales'] > 0:
-                recommendations.append("🔥 **ÁP LỰC TIÊU THỤ LỚN:** Vòng quay kho quá nhanh dưới 1 tháng. Sức mua đang tăng mạnh, cần cân nhắc tăng DOI mục tiêu của mã này lên để tối ưu chi phí vận chuyển.")
+                st.markdown("<div class='smart-card-warning'><b style='color:#e65100;'>🔥 ÁP LỰC TIÊU THỤ LỚN:</b><br><span style='color:#f57c00;'>Vòng quay kho dưới 1 tháng. Sức mua đang tăng mạnh, cần cân nhắc nâng tồn kho mục tiêu (DOI) để tối ưu chi phí vận chuyển.</span></div>", unsafe_allow_html=True)
                 
             if sku_data['Het_HSD_Value'] > 0:
-                recommendations.append(f"🚩 **RỦI RO HẠN SỬ DỤNG:** Mã SKU này đang gánh khoản thiệt hại cận/hết hạn dự kiến lên đến **{sku_data['Het_HSD_Value']:,.0f} ₫**. Đề xuất kho vận áp dụng nghiêm ngặt nguyên tắc FEFO (Hết hạn trước - Xuất trước).")
-
-            for rec in recommendations:
-                st.write(rec)
+                st.markdown(f"<div class='smart-card-error'><b style='color:#c62828;'>🚩 BÁO ĐỘNG HẠN SỬ DỤNG:</b><br><span style='color:#d32f2f;'>Mã SKU đang gánh khoản thiệt hại dự kiến <b>{sku_data['Het_HSD_Value']:,.0f} ₫</b>. Áp dụng ngay nguyên tắc xuất kho FEFO và đẩy mạnh xử lý hàng cận date.</span></div>", unsafe_allow_html=True)
 
 except Exception as e:
-    st.error(f"Lỗi đồng bộ cấu trúc hiển thị: {e}")
+    st.error(f"Lỗi hệ thống nội bộ: {e}")
