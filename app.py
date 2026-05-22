@@ -17,10 +17,10 @@ st.markdown("""
     /* -----------------------------------
        TƯƠNG PHẢN NỀN & SIDEBAR
        ----------------------------------- */
-    .main { background-color: #f4f7f9 !important; } /* Nền trung tâm sáng dịu */
+    .main { background-color: #f4f7f9 !important; } 
     
     [data-testid="stSidebar"] {
-        background-color: #f8fafc !important; /* Xám slate cực nhạt để tách biệt */
+        background-color: #f8fafc !important; 
         border-right: 1px solid #e2e8f0 !important;
         box-shadow: 4px 0 15px rgba(0,0,0,0.03);
     }
@@ -30,9 +30,9 @@ st.markdown("""
     /* -----------------------------------
        GREEN PASTEL CHO SLIDER BÊN SIDEBAR
        ----------------------------------- */
-    .stSlider > div > div > div > div { background-color: #a5d6a7 !important; } /* Trục thanh trượt */
+    .stSlider > div > div > div > div { background-color: #a5d6a7 !important; } 
     .stSlider > div > div > div > div > div[role="slider"] { 
-        background-color: #388e3c !important; /* Nút kéo */
+        background-color: #388e3c !important; 
         box-shadow: 0 0 8px rgba(56,142,60,0.5) !important; 
     }
     .stMultiSelect span[data-baseweb="tag"] { background-color: #e8f5e9 !important; color: #2e7d32 !important; border: 1px solid #a5d6a7; font-weight: 600; }
@@ -41,7 +41,7 @@ st.markdown("""
        THẺ CARD HERO SECTION (SHADOW NỔI BẬT)
        ----------------------------------- */
     div[data-testid="stMetric"] {
-        background-color: #e8f5e9 !important; /* Nền Pastel Green */
+        background-color: #e8f5e9 !important; 
         border-radius: 16px !important;
         padding: 24px !important;
         box-shadow: 0 10px 20px rgba(56,142,60,0.08), 0 4px 6px rgba(0,0,0,0.04) !important;
@@ -60,11 +60,13 @@ st.markdown("""
        ----------------------------------- */
     button[data-baseweb="tab"] { 
         font-size: 16px !important; font-weight: 700 !important; color: #64748b !important;
-        background: transparent; padding: 12px 24px; border-radius: 8px 8px 0 0;
+        background: #ffffff; padding: 12px 24px; border-radius: 8px 8px 0 0;
+        margin-right: 4px; border: 1px solid #e2e8f0; border-bottom: none;
     }
     button[aria-selected="true"] { 
         color: #2e7d32 !important; background-color: #ffffff !important;
-        border-bottom: 3px solid #388e3c !important; 
+        border-top: 3px solid #388e3c !important; 
+        border-bottom: none !important;
         box-shadow: 0 -4px 10px rgba(56,142,60,0.05) !important;
     }
     
@@ -171,7 +173,7 @@ try:
 
     df = df_f2[df_f2['Hang'].isin(selected_hang)].copy()
     
-    # --- THUẬT TOÁN TÍNH TOÁN ROP VÀ S2S ---
+    # --- THUẬT TOÁN TÍNH TOÁN ---
     growth_factor = 1 + (customer_growth / 100)
     df['Daily_Sales'] = (df['Xuat_Ban_SL'] / 150) * growth_factor 
     df['S2S_Months'] = df['Ton_Kho_SL'] / ((df['Daily_Sales'] * 30) + 0.0001)
@@ -179,15 +181,13 @@ try:
     df['Du_Tru_Thang'] = df['Daily_Sales'] * 30
     df['Du_Tru_Quy'] = df['Daily_Sales'] * 90
     
-    # Tính ROP Số lượng
     df['ROP_Qty'] = (lead_time * df['Daily_Sales']) + (doi_target * df['Daily_Sales'])
     df['De_Xuat_Mua'] = (df['ROP_Qty'] - df['Ton_Kho_SL']).apply(lambda x: max(int(x), 0))
 
-    # Đổi ROP thành Ngày Dự Kiến (dd/mm/yyyy)
     def calculate_reorder_date(row):
         if row['Daily_Sales'] <= 0: return "Chưa phát sinh"
         days_to_rop = (row['Ton_Kho_SL'] - row['ROP_Qty']) / row['Daily_Sales']
-        if days_to_rop <= 0: return today.strftime("%d/%m/%Y") # Phải nhập ngay
+        if days_to_rop <= 0: return today.strftime("%d/%m/%Y") 
         future_date = today + datetime.timedelta(days=int(days_to_rop))
         return future_date.strftime("%d/%m/%Y")
         
@@ -209,7 +209,7 @@ try:
     total_daily_sales = df['Daily_Sales'].sum()
     avg_s2s_global = df['Ton_Kho_SL'].sum() / ((total_daily_sales * 30) + 0.0001) if total_daily_sales > 0 else 0
 
-    # --- HERO SECTION & DASHBOARD TỔNG QUAN ---
+    # --- HERO SECTION TỔNG QUAN ---
     st.markdown("<h2 style='font-weight: 800; color: #0f172a; margin-bottom: 20px;'>🏥 SGM SUPPLY CHAIN INTEL</h2>", unsafe_allow_html=True)
     
     m1, m2, m3, m4 = st.columns(4)
@@ -218,18 +218,9 @@ try:
     m3.metric("S2S BÌNH QUÂN", f"{avg_s2s_global:.1f} Tháng")
     m4.metric("KHÁCH HÀNG ACTIVE", f"{int(df['Khach_Hang_Active'].sum()):,}")
 
-    # Đưa biểu đồ Tổng Quan ra ngoài Tabs
-    st.markdown("<h4 style='font-weight: 700; color: #334155; margin-top: 20px;'>📊 Dashboard Tổng Quan Cơ Cấu Vốn</h4>", unsafe_allow_html=True)
-    col_p1, col_p2 = st.columns(2)
-    with col_p1:
-        st.plotly_chart(px.pie(df, values='Ton_Kho_Value', names='Nganh_Hang', hole=0.4, title="Tỷ trọng Vốn theo Ngành Hàng", color_discrete_sequence=px.colors.qualitative.Pastel), use_container_width=True)
-    with col_p2:
-        st.plotly_chart(px.pie(df, values='Ton_Kho_Value', names='Hang', hole=0.4, title="Tỷ trọng Vốn theo Hãng Cung Cấp", color_discrete_sequence=px.colors.qualitative.Set2), use_container_width=True)
-
-    # --- ĐIỀU HƯỚNG TABS ---
     st.markdown("<br>", unsafe_allow_html=True)
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
-        "⚡ KẾ HOẠCH ĐẶT HÀNG", 
+        "📊 TỔNG QUAN & ĐẶT HÀNG", 
         "📈 PHÂN LOẠI BÁN CHẠY", 
         "👥 KHÁCH HÀNG THEO SKU", 
         "🚩 RỦI RO HẠN DÙNG",
@@ -237,16 +228,22 @@ try:
     ])
 
     with tab1:
-        st.markdown("<h3 style='font-weight: 700; color: #1e293b;'>🛒 Danh sách Kế hoạch Dự trù Đặt hàng</h3>", unsafe_allow_html=True)
+        st.markdown("<h4 style='font-weight: 700; color: #334155;'>📊 Dashboard Tổng Quan Cơ Cấu Vốn</h4>", unsafe_allow_html=True)
+        col_p1, col_p2 = st.columns(2)
+        with col_p1:
+            st.plotly_chart(px.pie(df, values='Ton_Kho_Value', names='Nganh_Hang', hole=0.4, title="Tỷ trọng Vốn theo Ngành Hàng", color_discrete_sequence=px.colors.qualitative.Pastel), use_container_width=True)
+        with col_p2:
+            st.plotly_chart(px.pie(df, values='Ton_Kho_Value', names='Hang', hole=0.4, title="Tỷ trọng Vốn theo Hãng Cung Cấp", color_discrete_sequence=px.colors.qualitative.Set2), use_container_width=True)
+
+        st.markdown("<h4 style='font-weight: 700; color: #1e293b; margin-top: 20px;'>🛒 Danh sách Kế hoạch Dự trù Đặt hàng</h4>", unsafe_allow_html=True)
         
         display_df = df[['SKU', 'Hang', 'Ton_Kho_SL', 'Khach_Hang_Active', 'Du_Tru_Thang', 'Du_Tru_Quy', 'Ngay_Dat_Hang_Du_Kien', 'De_Xuat_Mua', 'Trang_Thai', 'Canh_Bao_S2S']].copy()
         display_df.columns = [
             'Mã SKU', 'Hãng', 'Số Lượng Tồn Kho', 'Khách Hàng Active', 
-            'Dự Trù Trong Tháng', 'Dự Trù 3 Tháng (Quý)', 'Ngày Đặt Hàng Dự Kiến (ROP)', 'Số Lượng Cần Mua', 
+            'Dự Trù Trong Tháng', 'Dự Trù 3 Tháng (Quý)', 'Ngày Đặt Hàng (ROP)', 'Số Lượng Cần Mua', 
             'Trạng Thái', 'Cảnh Báo S2S'
         ]
         
-        # Định dạng chuẩn hàng nghìn bằng dâu phẩy cho Dataframe
         styled_df = display_df.style.format({
             'Số Lượng Tồn Kho': "{:,.0f}",
             'Dự Trù Trong Tháng': "{:,.0f}",
@@ -255,15 +252,13 @@ try:
         })
         st.dataframe(styled_df, use_container_width=True, height=350)
         
-        # Chú thích Logic ROP Thông minh
         st.markdown("""
         <div class="smart-card-info">
             <b style="color:#1d4ed8;">ℹ️ CƠ CHẾ DỰ BÁO NGÀY ĐẶT HÀNG (ROP DATE):</b><br>
-            Hệ thống không chỉ tính ra số lượng, mà còn tự động ước lượng <b>Thời điểm chính xác cần xuống đơn PO (Ngày/Tháng/Năm)</b>. ROP Date được hệ thống "dịch chuyển" liên tục dựa vào 3 tham số bạn kéo ở thanh menu: <b>Tốc độ tăng trưởng KH</b>, thời gian <b>Lead Time</b> chở hàng về, và số ngày tồn trữ phòng hờ <b>DOI</b>.
+            Hệ thống không chỉ tính ra số lượng, mà còn tự động ước lượng <b>Thời điểm chính xác cần xuống đơn PO (Ngày/Tháng/Năm)</b>. ROP Date được hệ thống "dịch chuyển" liên tục dựa vào 3 tham số thiết lập tại menu bên trái: <b>Tốc độ tăng trưởng KH</b>, thời gian <b>Lead Time</b> chở hàng về, và số ngày tồn trữ phòng hờ <b>DOI</b>.
         </div>
         """, unsafe_allow_html=True)
         
-        # Chức năng xuất File tuỳ biến cột
         st.markdown("<h4 style='font-weight: 600; color: #1e293b; margin-top: 30px;'>📥 Xuất File Đơn Đặt Hàng (PO)</h4>", unsafe_allow_html=True)
         po_df = display_df[display_df['Số Lượng Cần Mua'] > 0].copy()
         
@@ -280,7 +275,8 @@ try:
     with tab2:
         st.markdown("<h3 style='font-weight: 700; color: #1e293b;'>🔥 Top 20 SKU Bán Chạy Nhất</h3>", unsafe_allow_html=True)
         
-        col_bar, col_pie = st.columns([2, 1])
+        # Điều chỉnh lại layout cột: Bar Chart rộng hơn, Pie Chart hẹp hơn để tránh chèn ép
+        col_bar, col_pie = st.columns([1.8, 1.2])
         top_sku = df.sort_values(by='Xuat_Ban_SL', ascending=False).head(20).sort_values(by='Xuat_Ban_SL', ascending=True)
         
         with col_bar:
@@ -290,14 +286,32 @@ try:
                 labels={'Xuat_Ban_SL': 'Sản lượng xuất bán', 'SKU': 'Mã SKU'}
             )
             fig_bar.update_traces(texttemplate='%{text:,.0f}', textposition='outside', marker_line_width=0, marker=dict(cornerradius=8))
-            fig_bar.update_layout(coloraxis_showscale=False, plot_bgcolor='rgba(0,0,0,0)', xaxis_title="Sản lượng xuất bán", yaxis_title="Mã SKU", height=500)
+            # Tự động canh lề trục Y để tên sản phẩm dài không bị cắt mất
+            fig_bar.update_layout(
+                coloraxis_showscale=False, 
+                plot_bgcolor='rgba(0,0,0,0)', 
+                xaxis_title="Sản lượng xuất bán", 
+                yaxis_title="", 
+                height=550,
+                yaxis=dict(automargin=True) 
+            )
             st.plotly_chart(fig_bar, use_container_width=True)
             
         with col_pie:
-            # Pie chart phân bổ % các SKU bán chạy
-            fig_pie_sales = px.pie(top_sku, values='Xuat_Ban_SL', names='SKU', hole=0.4, title="Phân bổ % Top 20 SKU", color_discrete_sequence=px.colors.qualitative.Pastel)
-            fig_pie_sales.update_layout(height=500)
+            fig_pie_sales = px.pie(
+                top_sku, values='Xuat_Ban_SL', names='SKU', hole=0.4, 
+                title="Phân bổ % Top 20 SKU", 
+                color_discrete_sequence=px.colors.qualitative.Pastel
+            )
+            # Ẩn Legend (bảng chú thích) vì tên hàng quá dài sẽ làm vỡ biểu đồ. Chỉ hiện % bên trong.
+            fig_pie_sales.update_traces(textposition='inside', textinfo='percent')
+            fig_pie_sales.update_layout(
+                height=550, 
+                showlegend=False, 
+                margin=dict(t=50, b=50, l=20, r=20)
+            )
             st.plotly_chart(fig_pie_sales, use_container_width=True)
+            st.markdown("<p style='text-align: center; font-size: 13px; color: #64748b;'><i>*Trỏ chuột vào từng mảng màu để xem chi tiết tên SKU và sản lượng</i></p>", unsafe_allow_html=True)
 
     with tab3:
         st.markdown("<h3 style='font-weight: 700; color: #1e293b;'>🔍 Phân bổ Khách hàng theo SKU (Bản đồ Nhiệt)</h3>", unsafe_allow_html=True)
