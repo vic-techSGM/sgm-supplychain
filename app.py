@@ -391,7 +391,7 @@ try:
         st.markdown("""
         <div class="smart-card-info">
             <b style="color:#1d4ed8;">✨ CÁCH ĐỌC BẢN ĐỒ NHIỆT:</b><br>
-            - <b>Diện tích khối:</b> Đại diện tỷ trọng Tiền (Vốn Tồn Kho).<br>
+            - <b>Diện tích khối:</b> Đại diện tỷ trọng Vốn Tồn Kho. Khối càng lớn, vốn đọng càng nhiều.<br>
             - <b>Màu sắc:</b> <span style="color:#15803d; font-weight:800;">Xanh lá (Hợp lý)</span> | <span style="color:#b45309; font-weight:800;">Cam (Nguy cơ thiếu)</span> | <span style="color:#b91c1c; font-weight:800;">Đỏ tươi (Chậm luân chuyển)</span>.
         </div>
         """, unsafe_allow_html=True)
