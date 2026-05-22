@@ -226,7 +226,7 @@ try:
     
     # --- SIDEBAR MENU ---
     st.sidebar.image("https://raw.githubusercontent.com/vic-techSGM/sgm-supplychain/main/logo.png", use_container_width=True)
-    st.sidebar.markdown("<div class='copyright-text'>Build & Developed by Vic Fan.<br>Copyrights reserved. Version 01.26.05</div>", unsafe_allow_html=True)
+    st.sidebar.markdown("<div class='copyright-text'>Built & Developed by Vic Fan.<br>All rights reserved. Version 01.26.05</div>", unsafe_allow_html=True)
     
     st.sidebar.markdown("<h4>⚙️ THAM SỐ DỰ TRÙ</h4>", unsafe_allow_html=True)
     doi_target = st.sidebar.slider("Ngày tồn kho an toàn (DOI)", 15, 120, 45)
@@ -342,7 +342,7 @@ try:
             
         st.markdown("<p style='text-align: center; font-size: 13px; color: #64748b;'><i>*Trỏ chuột vào biểu đồ để xem chi tiết tên hãng/ngành và giá trị vốn cụ thể</i></p>", unsafe_allow_html=True)
 
-        st.markdown("<h4 style='font-weight: 800; margin-top: 30px;'>🛒 Danh sách Kế hoạch Dự trù Đặt hàng</h4>", unsafe_allow_html=True)
+        st.markdown("<h4 style='font-weight: 800; margin-top: 30px;'>🛒 Thống kê dự trù</h4>", unsafe_allow_html=True)
         
         display_df = df[['SKU', 'Hang', 'Ton_Kho_SL', 'Khach_Hang_Active', 'Du_Tru_Thang', 'Du_Tru_Quy', 'Ngay_Dat_Hang_Du_Kien', 'De_Xuat_Mua', 'Trang_Thai', 'Canh_Bao_S2S']].copy()
         display_df.columns = [
