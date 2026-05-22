@@ -4,93 +4,96 @@ import plotly.express as px
 import datetime
 
 # ==========================================
-# 1. CẤU HÌNH GIAO DIỆN MODERN DARK MODE
+# 1. CẤU HÌNH GIAO DIỆN DARK MODE & STICKY UI
 # ==========================================
 st.set_page_config(page_title="SGM Supply Chain Intel", page_icon="🏥", layout="wide", initial_sidebar_state="expanded")
 
 st.markdown("""
     <style>
-    /* Font Inter hiện đại */
+    /* Nhúng Font Inter */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
     html, body, [class*="css"] { font-family: 'Inter', sans-serif !important; }
 
     /* -----------------------------------
-       NỀN DARK MODE & SIDEBAR
+       1. KHU VỰC MAIN (NỀN TỐI)
        ----------------------------------- */
-    .main { background-color: #0f172a !important; color: #f8fafc !important; } 
+    .stApp { background-color: #0f172a !important; }
     
-    [data-testid="stSidebar"] {
-        background-color: #ffffff !important; 
-        border-right: 1px solid #e2e8f0 !important;
-        box-shadow: 4px 0 15px rgba(0,0,0,0.03);
-    }
-    
-    .copyright-text { font-size: 11px; color: #94a3b8; text-align: center; margin-top: -15px; margin-bottom: 25px; font-weight: 500; }
+    /* Chuyển các chữ cơ bản ở Main thành màu sáng */
+    .stApp, .stApp p, .stApp span, .stApp div[data-testid="stMarkdownContainer"] { color: #f8fafc; }
+    h1, h2, h3, h4, h5, h6 { color: #ffffff !important; font-weight: 700 !important; }
 
     /* -----------------------------------
-       STICKY HERO SECTION
+       2. KHU VỰC SIDEBAR (NỀN SÁNG)
        ----------------------------------- */
-    /* Lệnh này sẽ ghim thanh ngang chứa 4 thẻ Metric lên trên cùng khi cuộn chuột */
-    div[data-testid="stHorizontalBlock"]:has(div[data-testid="stMetric"]) {
+    [data-testid="stSidebar"] {
+        background-color: #ffffff !important;
+        border-right: 1px solid #cbd5e1 !important;
+    }
+    /* Ép text trong Sidebar thành màu tối để hiển thị rõ trên nền trắng */
+    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3, [data-testid="stSidebar"] h4 { color: #0f172a !important; }
+    [data-testid="stSidebar"] p, [data-testid="stSidebar"] label, [data-testid="stSidebar"] div { color: #1e293b !important; }
+    .copyright-text { font-size: 11px !important; color: #64748b !important; text-align: center; margin-top: -15px; margin-bottom: 25px; }
+
+    /* Trả lại màu Green Pastel cho Slider và Multiselect */
+    .stSlider > div > div > div > div { background-color: #a5d6a7 !important; }
+    .stSlider > div > div > div > div > div[role="slider"] { background-color: #388e3c !important; box-shadow: 0 0 5px rgba(56,142,60,0.5) !important; }
+    
+    /* Ép thẻ Multiselect (Tags) thành màu xanh Pastel */
+    .stMultiSelect span[data-baseweb="tag"] { background-color: #e8f5e9 !important; border: 1px solid #81c784 !important; }
+    .stMultiSelect span[data-baseweb="tag"] span { color: #1b5e20 !important; font-weight: 600 !important; }
+
+    /* -----------------------------------
+       3. HIỆU ỨNG THẺ CARD (HERO SECTION)
+       ----------------------------------- */
+    div[data-testid="stMetric"] {
+        background-color: #1e293b !important; 
+        border-radius: 12px !important;
+        padding: 20px !important;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.4) !important;
+        border-left: 5px solid #4ade80 !important; 
+        transition: transform 0.3s ease;
+    }
+    div[data-testid="stMetric"]:hover { transform: translateY(-5px); }
+    div[data-testid="stMetric"] label { color: #94a3b8 !important; font-size: 14px !important; text-transform: uppercase; font-weight: 700 !important; }
+    div[data-testid="stMetric"] div[data-testid="stMetricValue"] { color: #ffffff !important; font-size: 30px !important; font-weight: 800 !important; }
+
+    /* Lệnh làm Hero Section Sticky khi cuộn */
+    div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stMetric"]) {
         position: sticky;
-        top: 2.5rem;
+        top: 2.8rem;
         z-index: 999;
         background-color: #0f172a;
-        padding: 15px 0 15px 0;
+        padding: 10px 0 15px 0;
         border-bottom: 1px solid #1e293b;
     }
 
     /* -----------------------------------
-       THẺ CARD (METRIC) DARK MODE
-       ----------------------------------- */
-    div[data-testid="stMetric"] {
-        background-color: #1e293b !important; 
-        border-radius: 16px !important;
-        padding: 24px !important;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.3) !important;
-        border-left: 6px solid #388e3c !important; 
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-    div[data-testid="stMetric"]:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 25px rgba(56,142,60,0.2) !important;
-    }
-    div[data-testid="stMetric"] label { font-weight: 800 !important; font-size: 15px !important; color: #94a3b8 !important; text-transform: uppercase;}
-    div[data-testid="stMetric"] div[data-testid="stMetricValue"] { color: #f8fafc !important; font-weight: 800 !important; font-size: 32px !important;}
-
-    /* -----------------------------------
-       TABS: BOLD & TĂNG KÍCH THƯỚC CHỮ
+       4. TABS BOLD & SIZE TĂNG CƯỜNG
        ----------------------------------- */
     button[data-baseweb="tab"] { 
-        font-size: 18px !important; 
+        font-size: 17px !important; 
         font-weight: 800 !important; 
-        color: #94a3b8 !important;
-        background: transparent; padding: 12px 24px; border-radius: 8px 8px 0 0;
-        margin-right: 4px; border: 1px solid transparent;
+        color: #64748b !important;
+        background: transparent; padding: 12px 20px;
     }
     button[aria-selected="true"] { 
         color: #4ade80 !important; 
-        background-color: #1e293b !important;
-        border-top: 3px solid #4ade80 !important; 
-        border-bottom: none !important;
+        border-bottom: 3px solid #4ade80 !important; 
     }
-    
-    /* Đổi màu Title/Header sang trắng để hợp với nền tối */
-    h1, h2, h3, h4, h5, h6 { color: #f8fafc !important; }
-    
-    .stDataFrame { border-radius: 12px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.2); background: #ffffff; padding: 10px; }
+
+    /* -----------------------------------
+       5. BẢNG DỮ LIỆU & NÚT BẤM
+       ----------------------------------- */
+    .stDataFrame { background-color: #1e293b !important; border-radius: 10px; padding: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
     .stDownloadButton button { background-color: #388e3c !important; color: white !important; border-radius: 8px !important; font-weight: 700; border: none !important; width: 100%; box-shadow: 0 4px 10px rgba(56,142,60,0.25); }
     .stDownloadButton button:hover { background-color: #2e7d32 !important; transform: translateY(-2px); box-shadow: 0 6px 15px rgba(56,142,60,0.35); }
     
-    /* Smart Cards UI (Dark Theme adjusted) */
-    .smart-card-info { background-color: #1e293b; border-left: 5px solid #3b82f6; padding: 20px; border-radius: 12px; color: #e2e8f0; margin-bottom: 16px; }
-    .smart-card-warning { background-color: #1e293b; border-left: 5px solid #f59e0b; padding: 20px; border-radius: 12px; color: #e2e8f0; margin-bottom: 16px; }
-    .smart-card-error { background-color: #1e293b; border-left: 5px solid #ef4444; padding: 20px; border-radius: 12px; color: #e2e8f0; margin-bottom: 16px; }
-    .smart-card-success { background-color: #1e293b; border-left: 5px solid #10b981; padding: 20px; border-radius: 12px; color: #e2e8f0; margin-bottom: 16px; }
-    
-    /* Sidebar Slider Colors */
-    .stSlider > div > div > div > div { background-color: #a5d6a7 !important; } 
-    .stSlider > div > div > div > div > div[role="slider"] { background-color: #388e3c !important; box-shadow: 0 0 8px rgba(56,142,60,0.5) !important; }
+    /* Smart Cards UI cho Dark Mode */
+    .smart-card-info { background-color: #1e293b; border-left: 5px solid #3b82f6; padding: 18px; border-radius: 8px; color: #f8fafc; margin-bottom: 15px; }
+    .smart-card-warning { background-color: #1e293b; border-left: 5px solid #f59e0b; padding: 18px; border-radius: 8px; color: #f8fafc; margin-bottom: 15px; }
+    .smart-card-error { background-color: #1e293b; border-left: 5px solid #ef4444; padding: 18px; border-radius: 8px; color: #f8fafc; margin-bottom: 15px; }
+    .smart-card-success { background-color: #1e293b; border-left: 5px solid #10b981; padding: 18px; border-radius: 8px; color: #f8fafc; margin-bottom: 15px; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -166,13 +169,13 @@ try:
     st.sidebar.image("https://raw.githubusercontent.com/vic-techSGM/sgm-supplychain/main/logo.png", use_container_width=True)
     st.sidebar.markdown("<div class='copyright-text'>Build & Developed by Vic Fan.<br>Copyrights reserved. Version 01.26.05</div>", unsafe_allow_html=True)
     
-    st.sidebar.markdown("<h4 style='color:#1e293b; font-weight:800;'>⯁ THAM SỐ DỰ TRÙ</h4>", unsafe_allow_html=True)
+    st.sidebar.markdown("<h4>⯁ THAM SỐ DỰ TRÙ</h4>", unsafe_allow_html=True)
     doi_target = st.sidebar.slider("📅 Ngày tồn kho an toàn", 15, 120, 45)
     st.sidebar.caption("💡 Các mốc: 15 (Nguy cơ) - 45 (Chuẩn) - 90 (Đọng vốn)")
     lead_time = st.sidebar.slider("⏱️ Lead Time (Thời gian nhập)", 10, 90, 30)
     customer_growth = st.sidebar.slider("📈 Kỳ vọng tăng trưởng Khách hàng theo Quý (%)", 0, 100, 15)
     
-    st.sidebar.markdown("<h4 style='color:#1e293b; font-weight:800; margin-top:20px;'>📂 BỘ LỌC DỮ LIỆU</h4>", unsafe_allow_html=True)
+    st.sidebar.markdown("<h4 style='margin-top:20px;'>📂 BỘ LỌC DỮ LIỆU</h4>", unsafe_allow_html=True)
     list_nganh = df_full['Nganh_Hang'].unique().tolist()
     selected_nganh = st.sidebar.multiselect("Ngành hàng phân phối", list_nganh, default=list_nganh)
     
@@ -224,17 +227,18 @@ try:
     total_daily_sales = df['Daily_Sales'].sum()
     avg_s2s_global = df['Ton_Kho_SL'].sum() / ((total_daily_sales * 30) + 0.0001) if total_daily_sales > 0 else 0
 
-    # --- HERO SECTION TỔNG QUAN (STICKY SẼ ĐƯỢC ÁP DỤNG QUA CSS) ---
-    st.markdown("<h2 style='font-weight: 900; margin-bottom: 5px;'>🏥 SGM SUPPLY CHAIN INTEL</h2>", unsafe_allow_html=True)
+    # --- TIÊU ĐỀ TRANG ---
+    st.markdown("<h2 style='font-weight: 900; margin-bottom: 5px; color: #f8fafc;'>🏥 SGM SUPPLY CHAIN INTEL</h2>", unsafe_allow_html=True)
     
+    # --- HERO SECTION TỔNG QUAN (ĐÃ ĐƯỢC LÀM STICKY QUA CSS) ---
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("TỔNG VỐN TỒN KHO", f"{df['Ton_Kho_Value'].sum():,.0f} ₫")
     m2.metric("MÃ SKU ĐANG LỌC", f"{len(df):,}")
     m3.metric("S2S BÌNH QUÂN", f"{avg_s2s_global:.1f} Tháng")
     m4.metric("KHÁCH HÀNG ACTIVE", f"{int(df['Khach_Hang_Active'].sum()):,}")
 
-    # Đưa dải Tabs lên ngay sát thẻ số liệu
     st.markdown("<br>", unsafe_allow_html=True)
+    # --- ĐIỀU HƯỚNG TABS ---
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "📊 TỔNG QUAN & ĐẶT HÀNG", 
         "📈 PHÂN LOẠI BÁN CHẠY", 
@@ -260,7 +264,6 @@ try:
             'Trạng Thái', 'Cảnh Báo S2S'
         ]
         
-        # Format dấu phẩy hàng nghìn chuẩn tài chính
         styled_df = display_df.style.format({
             'Số Lượng Tồn Kho': "{:,.0f}",
             'Dự Trù Trong Tháng': "{:,.0f}",
@@ -276,7 +279,6 @@ try:
         </div>
         """, unsafe_allow_html=True)
         
-        # Chức năng xuất File tuỳ biến cột
         st.markdown("<h4 style='font-weight: 600; margin-top: 30px;'>📥 Xuất File Đơn Đặt Hàng (PO)</h4>", unsafe_allow_html=True)
         po_df = display_df[display_df['Số Lượng Cần Mua'] > 0].copy()
         
@@ -293,10 +295,11 @@ try:
     with tab2:
         st.markdown("<h3 style='font-weight: 700;'>🔥 Top 20 SKU Bán Chạy Nhất</h3>", unsafe_allow_html=True)
         
-        # Sắp xếp biểu đồ từ trên xuống (Bar trước, Pie sau)
+        # Lọc Top 20 và chuẩn bị dữ liệu
         top_sku = df.sort_values(by='Xuat_Ban_SL', ascending=False).head(20).sort_values(by='Xuat_Ban_SL', ascending=True)
         
-        st.markdown("<h4 style='font-weight: 600;'>1. Sản lượng Xuất bán theo Mã SKU</h4>", unsafe_allow_html=True)
+        # Biểu đồ Bar (Phía trên)
+        st.markdown("<h4 style='font-weight: 600; margin-top: 10px;'>1. Sản lượng Xuất bán theo Mã SKU</h4>", unsafe_allow_html=True)
         fig_bar = px.bar(
             top_sku, x='Xuat_Ban_SL', y='SKU', orientation='h', color='SKU', 
             color_discrete_sequence=px.colors.qualitative.Pastel, text='Xuat_Ban_SL',
@@ -307,14 +310,15 @@ try:
         fig_bar.update_layout(showlegend=False, plot_bgcolor='rgba(0,0,0,0)', xaxis_title="Sản lượng xuất bán", yaxis_title="Mã SKU", height=500, yaxis=dict(automargin=True))
         st.plotly_chart(fig_bar, use_container_width=True)
             
+        # Biểu đồ Pie (Phía dưới)
         st.markdown("<h4 style='font-weight: 600; margin-top: 30px;'>2. Phân bổ Tỷ trọng (%) Top 20 SKU</h4>", unsafe_allow_html=True)
-        # Pie chart đồng bộ màu với Bar chart thông qua việc dùng chung color='SKU'
         fig_pie_sales = px.pie(
             top_sku, values='Xuat_Ban_SL', names='SKU', hole=0.4, color='SKU',
             color_discrete_sequence=px.colors.qualitative.Pastel,
             template="plotly_dark"
         )
-        fig_pie_sales.update_traces(textposition='inside', textinfo='percent+label')
+        # Ẩn Legend để chống bóp méo biểu đồ khi tên SKU quá dài
+        fig_pie_sales.update_traces(textposition='inside', textinfo='percent')
         fig_pie_sales.update_layout(height=600, showlegend=False, margin=dict(t=30, b=30, l=10, r=10))
         st.plotly_chart(fig_pie_sales, use_container_width=True)
 
