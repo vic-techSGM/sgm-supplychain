@@ -4,26 +4,26 @@ import plotly.express as px
 import datetime
 
 # ==========================================
-# 1. CẤU HÌNH GIAO DIỆN LIGHT MODE CHUYÊN NGHIỆP
+# 1. CẤU HÌNH GIAO DIỆN LIGHT MODE & FONT MONTSERRAT
 # ==========================================
 st.set_page_config(page_title="SGM Supply Chain Intel", page_icon="🏥", layout="wide", initial_sidebar_state="expanded")
 
 st.markdown("""
     <style>
-    /* Font Montserrat dày dặn, hiện đại */
-    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght=400;500;600;700;800;900&display=swap');
-    html, body, [class*="css"] { 
+    /* Nhúng font Montserrat đồng bộ toàn diện hệ thống */
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap');
+    html, body, [class*="css"], [class*="st-"], .stApp { 
         font-family: 'Montserrat', sans-serif !important; 
     }
 
     /* -----------------------------------
-       1. KHU VỰC MAIN & SIDEBAR (ĐỒNG BỘ NỀN SÁNG)
+       1. KHU VỰC MAIN & SIDEBAR
        ----------------------------------- */
     .stApp, .main { background-color: #ffffff !important; }
     .stApp p, .stApp span, div[data-testid="stMarkdownContainer"] { color: #1e293b !important; }
     h1, h2, h3, h4, h5, h6 { color: #0f172a !important; font-weight: 800 !important; }
 
-    /* Sidebar nền xám nhẹ hiện đại */
+    /* Sidebar nền xám nhẹ */
     [data-testid="stSidebar"] {
         background-color: #f1f5f9 !important; 
         border-right: 1px solid #e2e8f0 !important;
@@ -43,7 +43,7 @@ st.markdown("""
     }
     .copyright-text { font-size: 11px !important; color: #64748b !important; text-align: center; margin-top: -15px; margin-bottom: 25px; font-weight: 500; }
 
-    /* Loại bỏ phông nền trắng của logo SGM bằng hiệu ứng blend màu */
+    /* Loại bỏ phông nền trắng của logo SGM */
     [data-testid="stSidebar"] img {
         mix-blend-mode: multiply;
     }
@@ -53,7 +53,6 @@ st.markdown("""
     .stSlider > div > div > div > div > div { background-color: #86efac !important; }
     .stSlider > div > div > div > div > div[role="slider"] { background-color: #22c55e !important; box-shadow: 0 0 10px rgba(34,197,94,0.4) !important; }
     
-    /* Tùy biến khung nền 3 bộ lọc thành màu Green Pastel */
     .stMultiSelect div[data-baseweb="select"] {
         background-color: #f0fdf4 !important; 
         border: 1px solid #86efac !important;
@@ -62,7 +61,6 @@ st.markdown("""
     .stMultiSelect div[data-baseweb="select"]:focus-within {
         border-color: #22c55e !important;
     }
-    /* Các nút tag đã chọn chuyển thành Green Pastel */
     .stMultiSelect span[data-baseweb="tag"] { 
         background-color: #bbf7d0 !important; 
         border: 1px solid #86efac !important; 
@@ -82,7 +80,6 @@ st.markdown("""
         background: linear-gradient(145deg, #fffdfa, #fdf4e7) !important; 
         border-radius: 20px !important;
         padding: 25px !important;
-        /* Đổ bóng 3D mềm mại trên nền sáng */
         box-shadow: 6px 12px 24px rgba(139,92,26,0.08), -2px -2px 10px rgba(255,255,255,0.8) !important;
         border-left: 6px solid #fb923c !important; 
         border-top: 1px solid rgba(251,146,60,0.1) !important;
@@ -117,17 +114,25 @@ st.markdown("""
     }
 
     /* -----------------------------------
-       3. TABS ĐẬM ĐÀ & BẢNG DỮ LIỆU SÁNG
+       3. TÙY BIẾN ĐÓNG FRAME CHO CÁC TABS THEO YÊU CẦU
        ----------------------------------- */
     button[data-baseweb="tab"] { 
-        font-size: 18px !important; 
-        font-weight: 800 !important; 
-        color: #64748b !important;
-        background: transparent; padding: 15px 25px;
+        font-family: 'Montserrat', sans-serif !important;
+        font-size: 19px !important; /* Tăng nhẹ kích cỡ */
+        font-weight: 800 !important; /* In đậm */
+        color: #475569 !important; /* Màu xám đậm */
+        background-color: #f8fafc !important; 
+        border: 1px solid #cbd5e1 !important; /* Đóng frame */
+        border-radius: 8px !important; 
+        margin-right: 10px !important;
+        padding: 12px 24px !important;
+        transition: all 0.2s ease-in-out !important;
     }
     button[aria-selected="true"] { 
-        color: #16a34a !important; 
-        border-bottom: 4px solid #16a34a !important; 
+        color: #388e3c !important; /* Màu green của logo */
+        background-color: #ffffff !important; 
+        border: 2px solid #388e3c !important; /* Khung dày màu green */
+        box-shadow: 0 4px 12px rgba(56,142,60,0.1) !important;
     }
 
     .stDataFrame { 
@@ -282,7 +287,6 @@ try:
     # --- HERO SECTION TỔNG QUAN ---
     st.markdown("<h2 style='font-weight: 900; margin-bottom: 5px; color: #0f172a;'>🏥 SGM SUPPLY CHAIN INTEL</h2>", unsafe_allow_html=True)
     
-    # 4 THẺ METRIC ĐƯỢC TỰ ĐỘNG NHẬN DIỆN LÀM STICKY TRÊN NỀN TRẮNG
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("TỔNG VỐN TỒN KHO", f"{df['Ton_Kho_Value'].sum():,.0f} ₫")
     m2.metric("MÃ SKU ĐANG LỌC", f"{len(df):,}")
@@ -290,15 +294,17 @@ try:
     m4.metric("KHÁCH HÀNG ACTIVE", f"{int(df['Khach_Hang_Active'].sum()):,}")
 
     st.markdown("<br>", unsafe_allow_html=True)
-    # --- ĐIỀU HƯỚNG TABS ---
+    
+    # --- ĐIỀU HƯỚNG TABS (ĐÃ ĐỔI THỨ TỰ BÁN CHẠY XUỐNG VỊ TRÍ THỨ 4) ---
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "📊 TỔNG QUAN & ĐẶT HÀNG", 
-        "📈 PHÂN LOẠI BÁN CHẠY", 
         "👥 KHÁCH HÀNG THEO SKU", 
         "🚩 RỦI RO HẠN DÙNG",
+        "📈 PHÂN LOẠI BÁN CHẠY", 
         "💡 TRA CỨU ĐỀ XUẤT"
     ])
 
+    # --- TAB 1: TỔNG QUAN & ĐẶT HÀNG ---
     with tab1:
         st.markdown("<h4 style='font-weight: 800; margin-top: 10px;'>📊 Dashboard Tổng Quan Cơ Cấu Vốn</h4>", unsafe_allow_html=True)
         col_p1, col_p2 = st.columns(2)
@@ -378,62 +384,8 @@ try:
         else:
             st.success("Không có mặt hàng nào cần đặt mua trong danh mục lọc hiện tại.")
 
+    # --- TAB 2: KHÁCH HÀNG THEO SKU (CHUYỂN LÊN VỊ TRÍ THỨ 2) ---
     with tab2:
-        st.markdown("<h3 style='font-weight: 800;'>🔥 Top 20 SKU Bán Chạy Nhất</h3>", unsafe_allow_html=True)
-        
-        # Sắp xếp để lấy Top 20
-        top_sku = df.sort_values(by='Xuat_Ban_SL', ascending=False).head(20).sort_values(by='Xuat_Ban_SL', ascending=True)
-        
-        # 1. BIỂU ĐỒ BAR (Ở TRÊN)
-        st.markdown("<h4 style='font-weight: 700; margin-top: 10px;'>1. Sản lượng Xuất bán theo Mã SKU</h4>", unsafe_allow_html=True)
-        fig_bar = px.bar(
-            top_sku, 
-            x='Xuat_Ban_SL', 
-            y='SKU', 
-            orientation='h', 
-            color='SKU', 
-            color_discrete_sequence=px.colors.qualitative.Pastel, 
-            text='Xuat_Ban_SL',
-            labels={'Xuat_Ban_SL': 'Sản lượng', 'SKU': 'Mã SKU'}
-        )
-        fig_bar.update_traces(
-            texttemplate='%{text:,.0f}', 
-            textposition='outside', 
-            marker_line_width=0, 
-            marker=dict(cornerradius=8)
-        )
-        fig_bar.update_layout(
-            showlegend=False, 
-            paper_bgcolor='rgba(0,0,0,0)', 
-            plot_bgcolor='rgba(0,0,0,0)', 
-            height=500, 
-            yaxis=dict(automargin=True),
-            font=dict(family="Montserrat", color="#1e293b")
-        )
-        st.plotly_chart(fig_bar, use_container_width=True)
-            
-        # 2. BIỂU ĐỒ PIE (Ở DƯỚI) - Đồng bộ màu qua thẻ color='SKU'
-        st.markdown("<h4 style='font-weight: 700; margin-top: 30px;'>2. Phân bổ Tỷ trọng (%) Top 20 SKU</h4>", unsafe_allow_html=True)
-        fig_pie_sales = px.pie(
-            top_sku, 
-            values='Xuat_Ban_SL', 
-            names='SKU', 
-            hole=0.4, 
-            color='SKU', 
-            color_discrete_sequence=px.colors.qualitative.Pastel
-        )
-        fig_pie_sales.update_traces(textposition='inside', textinfo='percent')
-        fig_pie_sales.update_layout(
-            height=600, 
-            showlegend=False, 
-            paper_bgcolor='rgba(0,0,0,0)', 
-            plot_bgcolor='rgba(0,0,0,0)', 
-            margin=dict(t=30, b=30, l=10, r=10),
-            font=dict(family="Montserrat", color="#1e293b")
-        )
-        st.plotly_chart(fig_pie_sales, use_container_width=True)
-
-    with tab3:
         st.markdown("<h3 style='font-weight: 800;'>🔍 Phân bổ Khách hàng theo SKU (Treemap)</h3>", unsafe_allow_html=True)
         
         st.markdown("""
@@ -477,20 +429,27 @@ try:
         else:
             st.warning("Không có dữ liệu tồn kho hợp lệ để khởi tạo Bản đồ nhiệt.")
 
-    with tab4:
+    # --- TAB 3: RỦI RO HẠN DÙNG (CHUYỂN LÊN VỊ TRÍ THỨ 3) ---
+    with tab3:
         st.markdown("<h3 style='font-weight: 800;'>🚩 Cảnh báo Hàng Cận/Hết Hạn</h3>", unsafe_allow_html=True)
         risk_df = df[df['Het_HSD_Value'] > 0].copy()
         
         st.metric(label="🚨 TỔNG GIÁ TRỊ THIỆT HẠI DỰ KIẾN", value=f"{risk_df['Het_HSD_Value'].sum():,.0f} ₫")
         
         if not risk_df.empty:
+            # Sửa đổi chú thích trục cột Y & X thành tiếng Việt
             fig_risk = px.bar(
                 risk_df, 
                 x='SKU', 
                 y='Het_HSD_Value', 
                 color='Hang', 
                 text='Het_HSD_Value',
-                color_discrete_sequence=px.colors.qualitative.Set3
+                color_discrete_sequence=px.colors.qualitative.Set3,
+                labels={
+                    'Het_HSD_Value': 'Giá trị hết hạn',
+                    'SKU': 'Mã SKU',
+                    'Hang': 'Hãng sản xuất'
+                }
             )
             fig_risk.update_traces(texttemplate='%{text:,.0f}', textposition='outside', marker=dict(cornerradius=6))
             fig_risk.update_layout(
@@ -500,13 +459,74 @@ try:
             )
             st.plotly_chart(fig_risk, use_container_width=True)
             
+            # Chuyển bảng thông tin chi tiết sang Tiếng Việt và đổi tên cột cuối thành Giá trị thất thoát
+            display_risk_df = risk_df[['SKU', 'Hang', 'Ton_Kho_SL', 'Het_HSD_Value']].copy()
+            display_risk_df.columns = ['Mã SKU', 'Hãng', 'Số Lượng Tồn Kho', 'Giá trị thất thoát']
+            
             st.dataframe(
-                risk_df[['SKU', 'Hang', 'Ton_Kho_SL', 'Het_HSD_Value']].style.format({'Ton_Kho_SL': "{:,.0f}", 'Het_HSD_Value': "{:,.0f}"}), 
+                display_risk_df.style.format({
+                    'Số Lượng Tồn Kho': "{:,.0f}", 
+                    'Giá trị thất thoát': "{:,.0f} ₫"
+                }), 
                 use_container_width=True
             )
         else: 
             st.markdown("<div class='smart-card-success'><b style='color:#15803d;'>✅ TRẠNG THÁI AN TOÀN:</b> Không ghi nhận rủi ro cận hạn.</div>", unsafe_allow_html=True)
 
+    # --- TAB 4: PHÂN LOẠI BÁN CHẠY (CHUYỂN XUỐNG VỊ TRÍ THỨ 4) ---
+    with tab4:
+        st.markdown("<h3 style='font-weight: 800;'>🔥 Top 20 SKU Bán Chạy Nhất</h3>", unsafe_allow_html=True)
+        
+        top_sku = df.sort_values(by='Xuat_Ban_SL', ascending=False).head(20).sort_values(by='Xuat_Ban_SL', ascending=True)
+        
+        st.markdown("<h4 style='font-weight: 700; margin-top: 10px;'>1. Sản lượng Xuất bán theo Mã SKU</h4>", unsafe_allow_html=True)
+        fig_bar = px.bar(
+            top_sku, 
+            x='Xuat_Ban_SL', 
+            y='SKU', 
+            orientation='h', 
+            color='SKU', 
+            color_discrete_sequence=px.colors.qualitative.Pastel, 
+            text='Xuat_Ban_SL',
+            labels={'Xuat_Ban_SL': 'Sản lượng', 'SKU': 'Mã SKU'}
+        )
+        fig_bar.update_traces(
+            texttemplate='%{text:,.0f}', 
+            textposition='outside', 
+            marker_line_width=0, 
+            marker=dict(cornerradius=8)
+        )
+        fig_bar.update_layout(
+            showlegend=False, 
+            paper_bgcolor='rgba(0,0,0,0)', 
+            plot_bgcolor='rgba(0,0,0,0)', 
+            height=500, 
+            yaxis=dict(automargin=True),
+            font=dict(family="Montserrat", color="#1e293b")
+        )
+        st.plotly_chart(fig_bar, use_container_width=True)
+            
+        st.markdown("<h4 style='font-weight: 700; margin-top: 30px;'>2. Phân bổ Tỷ trọng (%) Top 20 SKU</h4>", unsafe_allow_html=True)
+        fig_pie_sales = px.pie(
+            top_sku, 
+            values='Xuat_Ban_SL', 
+            names='SKU', 
+            hole=0.4, 
+            color='SKU', 
+            color_discrete_sequence=px.colors.qualitative.Pastel
+        )
+        fig_pie_sales.update_traces(textposition='inside', textinfo='percent')
+        fig_pie_sales.update_layout(
+            height=600, 
+            showlegend=False, 
+            paper_bgcolor='rgba(0,0,0,0)', 
+            plot_bgcolor='rgba(0,0,0,0)', 
+            margin=dict(t=30, b=30, l=10, r=10),
+            font=dict(family="Montserrat", color="#1e293b")
+        )
+        st.plotly_chart(fig_pie_sales, use_container_width=True)
+
+    # --- TAB 5: TRA CỨU ĐỀ XUẤT ---
     with tab5:
         st.markdown("<h3 style='font-weight: 800;'>🔍 Tra cứu chi tiết & Đề xuất AI</h3>", unsafe_allow_html=True)
         selected_sku = st.selectbox("Chọn Mã SKU cần phân tích:", df['SKU'].unique())
