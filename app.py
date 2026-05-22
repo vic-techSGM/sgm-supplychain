@@ -6,7 +6,7 @@ import datetime
 # ==========================================
 # 1. CẤU HÌNH GIAO DIỆN LIGHT MODE & FONT MONTSERRAT
 # ==========================================
-st.set_page_config(page_title="SGM Quản trị kho", page_icon="🏥", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="SGM Quản trị kho", page_icon="🏢", layout="wide", initial_sidebar_state="expanded")
 
 st.markdown("""
     <style>
@@ -285,7 +285,7 @@ try:
     avg_s2s_global = df['Ton_Kho_SL'].sum() / ((total_daily_sales * 30) + 0.0001) if total_daily_sales > 0 else 0
 
     # --- HERO SECTION TỔNG QUAN ---
-    st.markdown("<h2 style='font-weight: 900; margin-bottom: 5px; color: #0f172a;'>🏥 SGM SUPPLY CHAIN INTEL</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='font-weight: 900; margin-bottom: 5px; color: #0f172a;'>SAIGONMED - HỆ THỐNG QUẢN TRỊ KHO & GIÁM SÁT CUNG ỨNG</h2>", unsafe_allow_html=True)
     
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("TỔNG VỐN TỒN KHO", f"{df['Ton_Kho_Value'].sum():,.0f} ₫")
