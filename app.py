@@ -4,7 +4,7 @@ import plotly.express as px
 import datetime
 
 # ==========================================
-# 1. CẤU HÌNH GIAO DIỆN DARK MODE & STICKY UI
+# 1. CẤU HÌNH GIAO DIỆN NỀN TRẮNG CHUYÊN NGHIỆP
 # ==========================================
 st.set_page_config(page_title="SGM Supply Chain Intel", page_icon="🏥", layout="wide", initial_sidebar_state="expanded")
 
@@ -15,61 +15,59 @@ st.markdown("""
     html, body, [class*="css"] { font-family: 'Inter', sans-serif !important; }
 
     /* -----------------------------------
-       1. KHU VỰC MAIN (NỀN TỐI)
+       1. NỀN TRẮNG CHO CẢ MAIN VÀ SIDEBAR
        ----------------------------------- */
-    .stApp { background-color: #0f172a !important; }
+    .stApp, .main { background-color: #ffffff !important; }
     
-    /* Chuyển các chữ cơ bản ở Main thành màu sáng */
-    .stApp, .stApp p, .stApp span, .stApp div[data-testid="stMarkdownContainer"] { color: #f8fafc; }
-    h1, h2, h3, h4, h5, h6 { color: #ffffff !important; font-weight: 700 !important; }
-
-    /* -----------------------------------
-       2. KHU VỰC SIDEBAR (NỀN SÁNG)
-       ----------------------------------- */
     [data-testid="stSidebar"] {
         background-color: #ffffff !important;
-        border-right: 1px solid #cbd5e1 !important;
+        border-right: 1px solid #e2e8f0 !important;
     }
-    /* Ép text trong Sidebar thành màu tối để hiển thị rõ trên nền trắng */
+
+    /* Đảm bảo text hiển thị màu tối chuẩn trên nền trắng */
+    .stApp, .stApp p, .stApp span, div[data-testid="stMarkdownContainer"] { color: #334155 !important; }
+    h1, h2, h3, h4, h5, h6 { color: #0f172a !important; font-weight: 700 !important; }
     [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3, [data-testid="stSidebar"] h4 { color: #0f172a !important; }
     [data-testid="stSidebar"] p, [data-testid="stSidebar"] label, [data-testid="stSidebar"] div { color: #1e293b !important; }
+    
     .copyright-text { font-size: 11px !important; color: #64748b !important; text-align: center; margin-top: -15px; margin-bottom: 25px; }
 
-    /* Trả lại màu Green Pastel cho Slider và Multiselect */
+    /* -----------------------------------
+       2. GREEN PASTEL CHO BỘ LỌC TẠI SIDEBAR
+       ----------------------------------- */
     .stSlider > div > div > div > div { background-color: #a5d6a7 !important; }
     .stSlider > div > div > div > div > div[role="slider"] { background-color: #388e3c !important; box-shadow: 0 0 5px rgba(56,142,60,0.5) !important; }
-    
-    /* Ép thẻ Multiselect (Tags) thành màu xanh Pastel */
     .stMultiSelect span[data-baseweb="tag"] { background-color: #e8f5e9 !important; border: 1px solid #81c784 !important; }
     .stMultiSelect span[data-baseweb="tag"] span { color: #1b5e20 !important; font-weight: 600 !important; }
 
     /* -----------------------------------
-       3. HIỆU ỨNG THẺ CARD (HERO SECTION)
+       3. THẺ CARD HERO SECTION (STICKY & SHADOW)
        ----------------------------------- */
     div[data-testid="stMetric"] {
-        background-color: #1e293b !important; 
+        background-color: #ffffff !important; 
         border-radius: 12px !important;
         padding: 20px !important;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.4) !important;
-        border-left: 5px solid #4ade80 !important; 
+        box-shadow: 0 4px 15px rgba(0,0,0,0.06) !important;
+        border-left: 5px solid #388e3c !important; 
+        border: 1px solid #f1f5f9;
         transition: transform 0.3s ease;
     }
-    div[data-testid="stMetric"]:hover { transform: translateY(-5px); }
-    div[data-testid="stMetric"] label { color: #94a3b8 !important; font-size: 14px !important; text-transform: uppercase; font-weight: 700 !important; }
-    div[data-testid="stMetric"] div[data-testid="stMetricValue"] { color: #ffffff !important; font-size: 30px !important; font-weight: 800 !important; }
+    div[data-testid="stMetric"]:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important; }
+    div[data-testid="stMetric"] label { color: #64748b !important; font-size: 14px !important; text-transform: uppercase; font-weight: 700 !important; }
+    div[data-testid="stMetric"] div[data-testid="stMetricValue"] { color: #0f172a !important; font-size: 30px !important; font-weight: 800 !important; }
 
     /* Lệnh làm Hero Section Sticky khi cuộn */
     div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stMetric"]) {
         position: sticky;
         top: 2.8rem;
         z-index: 999;
-        background-color: #0f172a;
+        background-color: #ffffff;
         padding: 10px 0 15px 0;
-        border-bottom: 1px solid #1e293b;
+        border-bottom: 1px solid #e2e8f0;
     }
 
     /* -----------------------------------
-       4. TABS BOLD & SIZE TĂNG CƯỜNG
+       4. TABS & NÚT BẤM
        ----------------------------------- */
     button[data-baseweb="tab"] { 
         font-size: 17px !important; 
@@ -78,22 +76,21 @@ st.markdown("""
         background: transparent; padding: 12px 20px;
     }
     button[aria-selected="true"] { 
-        color: #4ade80 !important; 
-        border-bottom: 3px solid #4ade80 !important; 
+        color: #388e3c !important; 
+        border-bottom: 3px solid #388e3c !important; 
     }
 
-    /* -----------------------------------
-       5. BẢNG DỮ LIỆU & NÚT BẤM
-       ----------------------------------- */
-    .stDataFrame { background-color: #1e293b !important; border-radius: 10px; padding: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+    .stDataFrame { background-color: #ffffff !important; border-radius: 10px; padding: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
     .stDownloadButton button { background-color: #388e3c !important; color: white !important; border-radius: 8px !important; font-weight: 700; border: none !important; width: 100%; box-shadow: 0 4px 10px rgba(56,142,60,0.25); }
     .stDownloadButton button:hover { background-color: #2e7d32 !important; transform: translateY(-2px); box-shadow: 0 6px 15px rgba(56,142,60,0.35); }
     
-    /* Smart Cards UI cho Dark Mode */
-    .smart-card-info { background-color: #1e293b; border-left: 5px solid #3b82f6; padding: 18px; border-radius: 8px; color: #f8fafc; margin-bottom: 15px; }
-    .smart-card-warning { background-color: #1e293b; border-left: 5px solid #f59e0b; padding: 18px; border-radius: 8px; color: #f8fafc; margin-bottom: 15px; }
-    .smart-card-error { background-color: #1e293b; border-left: 5px solid #ef4444; padding: 18px; border-radius: 8px; color: #f8fafc; margin-bottom: 15px; }
-    .smart-card-success { background-color: #1e293b; border-left: 5px solid #10b981; padding: 18px; border-radius: 8px; color: #f8fafc; margin-bottom: 15px; }
+    /* -----------------------------------
+       5. SMART CARDS UI
+       ----------------------------------- */
+    .smart-card-info { background-color: #f0fdf4; border-left: 5px solid #3b82f6; padding: 18px; border-radius: 8px; margin-bottom: 15px; }
+    .smart-card-warning { background-color: #fffbeb; border-left: 5px solid #f59e0b; padding: 18px; border-radius: 8px; margin-bottom: 15px; }
+    .smart-card-error { background-color: #fef2f2; border-left: 5px solid #ef4444; padding: 18px; border-radius: 8px; margin-bottom: 15px; }
+    .smart-card-success { background-color: #f0fdf4; border-left: 5px solid #10b981; padding: 18px; border-radius: 8px; margin-bottom: 15px; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -169,13 +166,13 @@ try:
     st.sidebar.image("https://raw.githubusercontent.com/vic-techSGM/sgm-supplychain/main/logo.png", use_container_width=True)
     st.sidebar.markdown("<div class='copyright-text'>Build & Developed by Vic Fan.<br>Copyrights reserved. Version 01.26.05</div>", unsafe_allow_html=True)
     
-    st.sidebar.markdown("<h4>⯁ THAM SỐ DỰ TRÙ</h4>", unsafe_allow_html=True)
+    st.sidebar.markdown("<h4 style='font-weight:800;'>⚙️ THAM SỐ DỰ TRÙ</h4>", unsafe_allow_html=True)
     doi_target = st.sidebar.slider("📅 Ngày tồn kho an toàn", 15, 120, 45)
     st.sidebar.caption("💡 Các mốc: 15 (Nguy cơ) - 45 (Chuẩn) - 90 (Đọng vốn)")
     lead_time = st.sidebar.slider("⏱️ Lead Time (Thời gian nhập)", 10, 90, 30)
     customer_growth = st.sidebar.slider("📈 Kỳ vọng tăng trưởng Khách hàng theo Quý (%)", 0, 100, 15)
     
-    st.sidebar.markdown("<h4 style='margin-top:20px;'>📂 BỘ LỌC DỮ LIỆU</h4>", unsafe_allow_html=True)
+    st.sidebar.markdown("<h4 style='font-weight:800; margin-top:20px;'>📂 BỘ LỌC DỮ LIỆU</h4>", unsafe_allow_html=True)
     list_nganh = df_full['Nganh_Hang'].unique().tolist()
     selected_nganh = st.sidebar.multiselect("Ngành hàng phân phối", list_nganh, default=list_nganh)
     
@@ -228,7 +225,7 @@ try:
     avg_s2s_global = df['Ton_Kho_SL'].sum() / ((total_daily_sales * 30) + 0.0001) if total_daily_sales > 0 else 0
 
     # --- TIÊU ĐỀ TRANG ---
-    st.markdown("<h2 style='font-weight: 900; margin-bottom: 5px; color: #f8fafc;'>🏥 SGM SUPPLY CHAIN INTEL</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='font-weight: 900; margin-bottom: 5px;'>🏥 SGM SUPPLY CHAIN INTEL</h2>", unsafe_allow_html=True)
     
     # --- HERO SECTION TỔNG QUAN (ĐÃ ĐƯỢC LÀM STICKY QUA CSS) ---
     m1, m2, m3, m4 = st.columns(4)
@@ -251,11 +248,19 @@ try:
         st.markdown("<h4 style='font-weight: 700; margin-top: 10px;'>📊 Dashboard Tổng Quan Cơ Cấu Vốn</h4>", unsafe_allow_html=True)
         col_p1, col_p2 = st.columns(2)
         with col_p1:
-            st.plotly_chart(px.pie(df, values='Ton_Kho_Value', names='Nganh_Hang', hole=0.4, title="Tỷ trọng Vốn theo Ngành Hàng", color_discrete_sequence=px.colors.qualitative.Pastel, template="plotly_dark"), use_container_width=True)
+            fig_pie_nganh = px.pie(df, values='Ton_Kho_Value', names='Nganh_Hang', hole=0.4, title="Tỷ trọng Vốn theo Ngành Hàng", color_discrete_sequence=px.colors.qualitative.Pastel)
+            fig_pie_nganh.update_traces(textposition='inside', textinfo='percent')
+            fig_pie_nganh.update_layout(showlegend=False, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=50, b=20, l=10, r=10))
+            st.plotly_chart(fig_pie_nganh, use_container_width=True)
         with col_p2:
-            st.plotly_chart(px.pie(df, values='Ton_Kho_Value', names='Hang', hole=0.4, title="Tỷ trọng Vốn theo Hãng Cung Cấp", color_discrete_sequence=px.colors.qualitative.Set2, template="plotly_dark"), use_container_width=True)
+            fig_pie_hang = px.pie(df, values='Ton_Kho_Value', names='Hang', hole=0.4, title="Tỷ trọng Vốn theo Hãng Cung Cấp", color_discrete_sequence=px.colors.qualitative.Set2)
+            fig_pie_hang.update_traces(textposition='inside', textinfo='percent')
+            fig_pie_hang.update_layout(showlegend=False, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=50, b=20, l=10, r=10))
+            st.plotly_chart(fig_pie_hang, use_container_width=True)
+            
+        st.markdown("<p style='text-align: center; font-size: 13px; color: #64748b;'><i>*Trỏ chuột vào từng mảng màu để xem chi tiết tên danh mục và giá trị vốn</i></p>", unsafe_allow_html=True)
 
-        st.markdown("<h4 style='font-weight: 700; margin-top: 20px;'>🛒 Danh sách Kế hoạch Dự trù Đặt hàng</h4>", unsafe_allow_html=True)
+        st.markdown("<h4 style='font-weight: 700; margin-top: 30px;'>🛒 Danh sách Kế hoạch Dự trù Đặt hàng</h4>", unsafe_allow_html=True)
         
         display_df = df[['SKU', 'Hang', 'Ton_Kho_SL', 'Khach_Hang_Active', 'Du_Tru_Thang', 'Du_Tru_Quy', 'Ngay_Dat_Hang_Du_Kien', 'De_Xuat_Mua', 'Trang_Thai', 'Canh_Bao_S2S']].copy()
         display_df.columns = [
@@ -274,8 +279,8 @@ try:
         
         st.markdown("""
         <div class="smart-card-info">
-            <b style="color:#60a5fa;">ℹ️ CƠ CHẾ DỰ BÁO NGÀY ĐẶT HÀNG (ROP DATE):</b><br>
-            Hệ thống không chỉ tính ra số lượng, mà còn tự động ước lượng <b>Thời điểm chính xác cần xuống đơn PO (Ngày/Tháng/Năm)</b>. ROP Date được hệ thống "dịch chuyển" liên tục dựa vào 3 tham số thiết lập tại menu bên trái: <b>Tốc độ tăng trưởng KH</b>, thời gian <b>Lead Time</b> chở hàng về, và số ngày tồn trữ phòng hờ <b>DOI</b>.
+            <b style="color:#1d4ed8;">ℹ️ CƠ CHẾ DỰ BÁO NGÀY ĐẶT HÀNG (ROP DATE):</b><br>
+            <span style="color:#1e293b;">Hệ thống không chỉ tính ra số lượng, mà còn tự động ước lượng <b>Thời điểm chính xác cần xuống đơn PO (Ngày/Tháng/Năm)</b>. ROP Date được hệ thống "dịch chuyển" liên tục dựa vào 3 tham số thiết lập tại menu bên trái: <b>Tốc độ tăng trưởng KH</b>, thời gian <b>Lead Time</b> chở hàng về, và số ngày tồn trữ phòng hờ <b>DOI</b>.</span>
         </div>
         """, unsafe_allow_html=True)
         
@@ -295,42 +300,38 @@ try:
     with tab2:
         st.markdown("<h3 style='font-weight: 700;'>🔥 Top 20 SKU Bán Chạy Nhất</h3>", unsafe_allow_html=True)
         
-        # Lọc Top 20 và chuẩn bị dữ liệu
         top_sku = df.sort_values(by='Xuat_Ban_SL', ascending=False).head(20).sort_values(by='Xuat_Ban_SL', ascending=True)
         
-        # Biểu đồ Bar (Phía trên)
         st.markdown("<h4 style='font-weight: 600; margin-top: 10px;'>1. Sản lượng Xuất bán theo Mã SKU</h4>", unsafe_allow_html=True)
         fig_bar = px.bar(
             top_sku, x='Xuat_Ban_SL', y='SKU', orientation='h', color='SKU', 
             color_discrete_sequence=px.colors.qualitative.Pastel, text='Xuat_Ban_SL',
-            labels={'Xuat_Ban_SL': 'Sản lượng xuất bán', 'SKU': 'Mã SKU'},
-            template="plotly_dark"
+            labels={'Xuat_Ban_SL': 'Sản lượng xuất bán', 'SKU': 'Mã SKU'}
         )
         fig_bar.update_traces(texttemplate='%{text:,.0f}', textposition='outside', marker_line_width=0, marker=dict(cornerradius=8))
-        fig_bar.update_layout(showlegend=False, plot_bgcolor='rgba(0,0,0,0)', xaxis_title="Sản lượng xuất bán", yaxis_title="Mã SKU", height=500, yaxis=dict(automargin=True))
+        fig_bar.update_layout(showlegend=False, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', xaxis_title="Sản lượng xuất bán", yaxis_title="Mã SKU", height=500, yaxis=dict(automargin=True))
         st.plotly_chart(fig_bar, use_container_width=True)
             
-        # Biểu đồ Pie (Phía dưới)
         st.markdown("<h4 style='font-weight: 600; margin-top: 30px;'>2. Phân bổ Tỷ trọng (%) Top 20 SKU</h4>", unsafe_allow_html=True)
         fig_pie_sales = px.pie(
             top_sku, values='Xuat_Ban_SL', names='SKU', hole=0.4, color='SKU',
-            color_discrete_sequence=px.colors.qualitative.Pastel,
-            template="plotly_dark"
+            color_discrete_sequence=px.colors.qualitative.Pastel
         )
         # Ẩn Legend để chống bóp méo biểu đồ khi tên SKU quá dài
         fig_pie_sales.update_traces(textposition='inside', textinfo='percent')
-        fig_pie_sales.update_layout(height=600, showlegend=False, margin=dict(t=30, b=30, l=10, r=10))
+        fig_pie_sales.update_layout(height=600, showlegend=False, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=30, b=30, l=10, r=10))
         st.plotly_chart(fig_pie_sales, use_container_width=True)
+        st.markdown("<p style='text-align: center; font-size: 13px; color: #64748b;'><i>*Trỏ chuột vào từng mảng màu để xem chi tiết tên SKU và tỷ lệ %</i></p>", unsafe_allow_html=True)
 
     with tab3:
         st.markdown("<h3 style='font-weight: 700;'>🔍 Phân bổ Khách hàng theo SKU (Bản đồ Nhiệt)</h3>", unsafe_allow_html=True)
         
         st.markdown("""
         <div class="smart-card-info">
-            <b style="color:#60a5fa; font-size: 15px;">💡 CÁCH ĐỌC BẢN ĐỒ NHIỆT (TREEMAP):</b><br>
-            <span style="color:#e2e8f0; font-size: 14px; line-height: 1.6;">
+            <b style="color:#1d4ed8; font-size: 15px;">💡 CÁCH ĐỌC BẢN ĐỒ NHIỆT (TREEMAP):</b><br>
+            <span style="color:#1e293b; font-size: 14px; line-height: 1.6;">
             - <b>Kích thước Diện tích:</b> Biểu thị tỷ trọng Dòng tiền (Vốn Tồn Kho). Diện tích càng rộng, vốn đọng càng nhiều.<br>
-            - <b>Quy ước Màu sắc:</b> <span style="color:#4ade80; font-weight:700;">Xanh lá (Tồn kho hợp lý)</span> | <span style="color:#fbbf24; font-weight:700;">Cam (Nguy cơ thiếu hụt)</span> | <span style="color:#f87171; font-weight:700;">Đỏ tươi (Chậm luân chuyển)</span>.
+            - <b>Quy ước Màu sắc:</b> <span style="color:#15803d; font-weight:700;">Xanh lá (Tồn kho hợp lý)</span> | <span style="color:#b45309; font-weight:700;">Cam (Nguy cơ thiếu hụt)</span> | <span style="color:#b91c1c; font-weight:700;">Đỏ tươi (Chậm luân chuyển)</span>.
             </span>
         </div>
         """, unsafe_allow_html=True)
@@ -346,8 +347,8 @@ try:
             tong_von_kh = df_tab3['Ton_Kho_Value'].sum()
             st.markdown(f"""
             <div class="smart-card-success">
-                <b style="color:#34d399; font-size: 15px;">📊 KẾT QUẢ ĐÁNH GIÁ TỆP KHÁCH HÀNG:</b><br>
-                <span style="color:#e2e8f0; font-size: 14px;">
+                <b style="color:#047857; font-size: 15px;">📊 KẾT QUẢ ĐÁNH GIÁ TỆP KHÁCH HÀNG:</b><br>
+                <span style="color:#1e293b; font-size: 14px;">
                 Tệp khách hàng đang chọn tiêu thụ trực tiếp <b>{len(df_tab3)} mã SKU</b>, với tổng dòng vốn lưu trữ đang phân bổ là <b>{tong_von_kh:,.0f} ₫</b>.
                 </span>
             </div>
@@ -358,10 +359,10 @@ try:
                 df_tab3[df_tab3['Ton_Kho_Value'] > 0],
                 path=[px.Constant("CỤC DIỆN TỔN KHO"), 'Canh_Bao_S2S', 'Hang', 'SKU'],
                 values='Ton_Kho_Value', color='Canh_Bao_S2S',
-                color_discrete_map={"⚠️ Chậm luân chuyển": "#ef4444", "🔥 Rủi ro thiếu hàng": "#f59e0b", "✅ Hợp lý": "#10b981"},
-                template="plotly_dark"
+                color_discrete_map={"⚠️ Chậm luân chuyển": "#ef4444", "🔥 Rủi ro thiếu hàng": "#f59e0b", "✅ Hợp lý": "#10b981"}
             )
-            fig_treemap.update_layout(margin=dict(t=30, l=10, r=10, b=10))
+            fig_treemap.update_traces(root_color="#f8fafc")
+            fig_treemap.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=30, l=10, r=10, b=10))
             st.plotly_chart(fig_treemap, use_container_width=True)
         else:
             st.warning("Không có dữ liệu tồn kho hợp lệ để khởi tạo Bản đồ nhiệt.")
@@ -377,11 +378,10 @@ try:
             fig_risk = px.bar(
                 risk_df, x='SKU', y='Het_HSD_Value', color='Hang', text='Het_HSD_Value',
                 labels={'SKU': 'Mã SKU', 'Het_HSD_Value': 'Giá trị thiệt hại (₫)'},
-                color_discrete_sequence=px.colors.qualitative.Set3,
-                template="plotly_dark"
+                color_discrete_sequence=px.colors.qualitative.Set3
             )
             fig_risk.update_traces(texttemplate='%{text:,.0f}', textposition='outside', marker_line_width=0, marker=dict(cornerradius=6))
-            fig_risk.update_layout(plot_bgcolor='rgba(0,0,0,0)', xaxis_title="Mã SKU", yaxis_title="Tổng Giá trị mất đi (VNĐ)")
+            fig_risk.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', xaxis_title="Mã SKU", yaxis_title="Tổng Giá trị mất đi (VNĐ)")
             st.plotly_chart(fig_risk, use_container_width=True)
             
             st.markdown("<h4 style='font-weight: 600; margin-top: 20px;'>📋 Bảng Kê Chi Tiết Thiệt Hại</h4>", unsafe_allow_html=True)
@@ -389,7 +389,7 @@ try:
             risk_display.columns = ['Mã SKU', 'Hãng Cung Cấp', 'Số Lượng Tồn', 'Giá Trị Mất Đi (VNĐ)']
             st.dataframe(risk_display.style.format({'Số Lượng Tồn': "{:,.0f}", 'Giá Trị Mất Đi (VNĐ)': "{:,.0f}"}), use_container_width=True)
         else:
-            st.markdown("<div class='smart-card-success'><b style='color:#34d399;'>✅ TRẠNG THÁI AN TOÀN:</b> Hệ thống ghi nhận không có rủi ro cận hạn/hết hạn.</div>", unsafe_allow_html=True)
+            st.markdown("<div class='smart-card-success'><b style='color:#047857;'>✅ TRẠNG THÁI AN TOÀN:</b> Hệ thống ghi nhận không có rủi ro cận hạn/hết hạn.</div>", unsafe_allow_html=True)
 
     with tab5:
         st.markdown("<h3 style='font-weight: 700;'>🔍 Tra cứu chi tiết & Đề xuất AI</h3>", unsafe_allow_html=True)
@@ -414,19 +414,19 @@ try:
             st.markdown("<h4 style='font-weight: 700; margin-top: 30px; margin-bottom: 20px;'>🧠 ENGINE ĐỀ XUẤT ĐIỀU PHỐI</h4>", unsafe_allow_html=True)
             
             if sku_data['Trang_Thai'] == "🔴 ĐỨT HÀNG":
-                st.markdown(f"<div class='smart-card-error'><b style='color:#f87171;'>🚨 CẢNH BÁO KHẨN CẤP (ĐỨT HÀNG):</b><br><span>Số lượng tồn kho thấp hơn mức an toàn Lead Time. Phát hành ngay đơn PO <b>{sku_data['De_Xuat_Mua']:,.0f}</b> sản phẩm. Ngày đặt hàng bắt buộc: <b>{sku_data['Ngay_Dat_Hang_Du_Kien']}</b>.</span></div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='smart-card-error'><b style='color:#b91c1c;'>🚨 CẢNH BÁO KHẨN CẤP (ĐỨT HÀNG):</b><br><span style='color:#1e293b;'>Số lượng tồn kho thấp hơn mức an toàn Lead Time. Phát hành ngay đơn PO <b>{sku_data['De_Xuat_Mua']:,.0f}</b> sản phẩm. Ngày đặt hàng bắt buộc: <b>{sku_data['Ngay_Dat_Hang_Du_Kien']}</b>.</span></div>", unsafe_allow_html=True)
             elif sku_data['Trang_Thai'] == "🟡 CẦN NHẬP":
-                st.markdown(f"<div class='smart-card-warning'><b style='color:#fbbf24;'>⚠️ KẾ HOẠCH NHẬP BỔ SUNG:</b><br><span>Mặt hàng nằm dưới điểm ROP. Bổ sung mua <b>{sku_data['De_Xuat_Mua']:,.0f}</b> sản phẩm. Hạn chót đặt hàng: <b>{sku_data['Ngay_Dat_Hang_Du_Kien']}</b>.</span></div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='smart-card-warning'><b style='color:#b45309;'>⚠️ KẾ HOẠCH NHẬP BỔ SUNG:</b><br><span style='color:#1e293b;'>Mặt hàng nằm dưới điểm ROP. Bổ sung mua <b>{sku_data['De_Xuat_Mua']:,.0f}</b> sản phẩm. Hạn chót đặt hàng: <b>{sku_data['Ngay_Dat_Hang_Du_Kien']}</b>.</span></div>", unsafe_allow_html=True)
             else:
-                st.markdown(f"<div class='smart-card-success'><b style='color:#34d399;'>🟢 TỒN KHO AN TOÀN:</b><br><span>Chưa cần can thiệp nhập thêm. Dự kiến đến ngày <b>{sku_data['Ngay_Dat_Hang_Du_Kien']}</b> mới cần lên đơn kế tiếp.</span></div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='smart-card-success'><b style='color:#047857;'>🟢 TỒN KHO AN TOÀN:</b><br><span style='color:#1e293b;'>Chưa cần can thiệp nhập thêm. Dự kiến đến ngày <b>{sku_data['Ngay_Dat_Hang_Du_Kien']}</b> mới cần lên đơn kế tiếp.</span></div>", unsafe_allow_html=True)
                 
             if sku_data['S2S_Months'] > 6:
-                st.markdown(f"<div class='smart-card-error'><b style='color:#f87171;'>📦 RỦI RO ĐỌNG VỐN LÂU DÀI:</b><br><span>Chỉ số Stock-to-Sales đạt <b>{sku_data['S2S_Months']:.1f} tháng</b> (vượt ngưỡng 6 tháng). Đề xuất xúc tiến bán hoặc ngưng kế hoạch nhập liệu.</span></div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='smart-card-error'><b style='color:#b91c1c;'>📦 RỦI RO ĐỌNG VỐN LÂU DÀI:</b><br><span style='color:#1e293b;'>Chỉ số Stock-to-Sales đạt <b>{sku_data['S2S_Months']:.1f} tháng</b> (vượt ngưỡng 6 tháng). Đề xuất xúc tiến bán hoặc ngưng kế hoạch nhập liệu.</span></div>", unsafe_allow_html=True)
             elif sku_data['S2S_Months'] < 1 and sku_data['Daily_Sales'] > 0:
-                st.markdown("<div class='smart-card-warning'><b style='color:#fbbf24;'>🔥 ÁP LỰC TIÊU THỤ LỚN:</b><br><span>Vòng quay kho dưới 1 tháng. Sức mua đang tăng mạnh, cần cân nhắc nâng tồn kho mục tiêu (DOI).</span></div>", unsafe_allow_html=True)
+                st.markdown("<div class='smart-card-warning'><b style='color:#b45309;'>🔥 ÁP LỰC TIÊU THỤ LỚN:</b><br><span style='color:#1e293b;'>Vòng quay kho dưới 1 tháng. Sức mua đang tăng mạnh, cần cân nhắc nâng tồn kho mục tiêu (DOI).</span></div>", unsafe_allow_html=True)
                 
             if sku_data['Het_HSD_Value'] > 0:
-                st.markdown(f"<div class='smart-card-error'><b style='color:#f87171;'>🚩 BÁO ĐỘNG HẠN SỬ DỤNG:</b><br><span>Mã SKU đang gánh khoản thiệt hại dự kiến <b>{sku_data['Het_HSD_Value']:,.0f} ₫</b>. Áp dụng ngay xuất kho FEFO.</span></div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='smart-card-error'><b style='color:#b91c1c;'>🚩 BÁO ĐỘNG HẠN SỬ DỤNG:</b><br><span style='color:#1e293b;'>Mã SKU đang gánh khoản thiệt hại dự kiến <b>{sku_data['Het_HSD_Value']:,.0f} ₫</b>. Áp dụng ngay xuất kho FEFO.</span></div>", unsafe_allow_html=True)
 
 except Exception as e:
     st.error(f"Lỗi hệ thống nội bộ: {e}")
