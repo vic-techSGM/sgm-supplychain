@@ -6,7 +6,7 @@ import datetime
 # ==========================================
 # 1. CẤU HÌNH GIAO DIỆN LIGHT MODE & FONT MONTSERRAT
 # ==========================================
-st.set_page_config(page_title="SGM Supply Chain Intel", page_icon="🏥", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="SGM Quản trị kho", page_icon="🏥", layout="wide", initial_sidebar_state="expanded")
 
 st.markdown("""
     <style>
@@ -230,21 +230,21 @@ try:
     
     st.sidebar.markdown("<h4>⚙️ THAM SỐ DỰ TRÙ</h4>", unsafe_allow_html=True)
     doi_target = st.sidebar.slider("Ngày tồn kho an toàn (DOI)", 15, 120, 45)
-    st.sidebar.caption("💡 Các mốc: 15 (Nguy cơ) - 45 (Chuẩn) - 90 (Đọng vốn)")
-    lead_time = st.sidebar.slider("Lead Time (Thời gian nhập)", 10, 90, 30)
+    st.sidebar.caption("💡15 (Nguy cơ) - 45 (Chuẩn) - 90 (Đọng vốn)")
+    lead_time = st.sidebar.slider("Lead Time (Ngày nhập)", 10, 90, 30)
     customer_growth = st.sidebar.slider("Kỳ vọng tăng trưởng Khách hàng theo Quý (%)", 0, 100, 15)
     
-    st.sidebar.markdown("<h4>📂 BỘ LỌC DỮ LIỆU</h4>", unsafe_allow_html=True)
+    st.sidebar.markdown("<h4>📂 BỘ LỌC</h4>", unsafe_allow_html=True)
     list_nganh = df_full['Nganh_Hang'].unique().tolist()
-    selected_nganh = st.sidebar.multiselect("Phân nhóm Ngành hàng", list_nganh, default=list_nganh)
+    selected_nganh = st.sidebar.multiselect("Ngành hàng", list_nganh, default=list_nganh)
     
     df_f1 = df_full[df_full['Nganh_Hang'].isin(selected_nganh)]
     list_chungloai = df_f1['Chung_Loai'].unique().tolist() if 'Chung_Loai' in df_f1.columns else []
-    selected_chungloai = st.sidebar.multiselect("Chi tiết Chủng loại", list_chungloai, default=list_chungloai) if list_chungloai else []
+    selected_chungloai = st.sidebar.multiselect("Chủng loại", list_chungloai, default=list_chungloai) if list_chungloai else []
     
     df_f2 = df_f1[df_f1['Chung_Loai'].isin(selected_chungloai)] if selected_chungloai else df_f1
     list_hang = df_f2['Hang'].unique().tolist()
-    selected_hang = st.sidebar.multiselect("Nhà cung cấp (Hãng)", list_hang, default=list_hang)
+    selected_hang = st.sidebar.multiselect("Hãng", list_hang, default=list_hang)
 
     df = df_f2[df_f2['Hang'].isin(selected_hang)].copy()
     
@@ -289,29 +289,29 @@ try:
     
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("TỔNG VỐN TỒN KHO", f"{df['Ton_Kho_Value'].sum():,.0f} ₫")
-    m2.metric("MÃ SKU ĐANG LỌC", f"{len(df):,}")
+    m2.metric("SỐ LƯỢNG SKU", f"{len(df):,}")
     m3.metric("S2S BÌNH QUÂN", f"{avg_s2s_global:.1f} Tháng")
-    m4.metric("KHÁCH HÀNG ACTIVE", f"{int(df['Khach_Hang_Active'].sum()):,}")
+    m4.metric("KHÁCH HÀNG CÓ GIAO DỊCH", f"{int(df['Khach_Hang_Active'].sum()):,}")
 
     st.markdown("<br>", unsafe_allow_html=True)
     
     # --- ĐIỀU HƯỚNG TABS (ĐÃ ĐỔI THỨ TỰ BÁN CHẠY XUỐNG VỊ TRÍ THỨ 4) ---
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
-        "📊 TỔNG QUAN & ĐẶT HÀNG", 
+        "📊 TỔNG QUAN & DỰ TRÙ", 
         "👥 KHÁCH HÀNG THEO SKU", 
         "🚩 RỦI RO HẠN DÙNG",
-        "📈 PHÂN LOẠI BÁN CHẠY", 
-        "💡 TRA CỨU ĐỀ XUẤT"
+        "📈 PHÂN LOẠI SKU THEO DOANH SỐ", 
+        "💡 TRA CỨU CHI TIẾT SKU"
     ])
 
     # --- TAB 1: TỔNG QUAN & ĐẶT HÀNG ---
     with tab1:
-        st.markdown("<h4 style='font-weight: 800; margin-top: 10px;'>📊 Dashboard Tổng Quan Cơ Cấu Vốn</h4>", unsafe_allow_html=True)
+        st.markdown("<h4 style='font-weight: 800; margin-top: 10px;'>📊 Tổng Quan Cơ Cấu Vốn</h4>", unsafe_allow_html=True)
         col_p1, col_p2 = st.columns(2)
         with col_p1:
             fig_pie_nganh = px.pie(
                 df, values='Ton_Kho_Value', names='Nganh_Hang', hole=0.4, 
-                title="Tỷ trọng Vốn theo Ngành Hàng", 
+                title="Phân bổ vốn theo Ngành Hàng", 
                 color_discrete_sequence=px.colors.qualitative.Pastel
             )
             fig_pie_nganh.update_traces(textposition='inside', textinfo='percent')
@@ -327,7 +327,7 @@ try:
         with col_p2:
             fig_pie_hang = px.pie(
                 df, values='Ton_Kho_Value', names='Hang', hole=0.4, 
-                title="Tỷ trọng Vốn theo Hãng Cung Cấp", 
+                title="Tỷ trọng vốn theo Hãng", 
                 color_discrete_sequence=px.colors.qualitative.Set2
             )
             fig_pie_hang.update_traces(textposition='inside', textinfo='percent')
@@ -362,7 +362,7 @@ try:
         st.markdown("""
         <div class="smart-card-info">
             <b style="color:#1d4ed8;">ℹ️ CƠ CHẾ DỰ BÁO NGÀY ĐẶT HÀNG (ROP DATE):</b><br>
-            Hệ thống tự động ước lượng <b>Thời điểm chính xác cần xuống đơn PO (Ngày/Tháng/Năm)</b>. ROP Date được hệ thống "dịch chuyển" liên tục dựa vào 3 tham số thiết lập tại menu bên trái: <b>Tốc độ tăng trưởng KH</b>, thời gian <b>Lead Time</b> chở hàng về, và số ngày tồn trữ phòng hờ <b>DOI</b>.
+            Hệ thống tự động ước lượng <b>Thời điểm chính xác cần xuống đơn PO (Ngày/Tháng/Năm)</b>. Ngày dự kiến được hệ thống tính toán dựa vào 3 tham số thiết lập: <b>Tốc độ tăng trưởng KH</b>, thời gian <b>Lead Time</b> chở hàng về, và số ngày tồn trữ phòng hờ <b>DOI</b>.
         </div>
         """, unsafe_allow_html=True)
         
@@ -386,18 +386,18 @@ try:
 
     # --- TAB 2: KHÁCH HÀNG THEO SKU (CHUYỂN LÊN VỊ TRÍ THỨ 2) ---
     with tab2:
-        st.markdown("<h3 style='font-weight: 800;'>🔍 Phân bổ Khách hàng theo SKU (Treemap)</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='font-weight: 800;'>🔍 Phân bổ Khách hàng theo SKU</h3>", unsafe_allow_html=True)
         
         st.markdown("""
         <div class="smart-card-info">
-            <b style="color:#1d4ed8;">💡 CÁCH ĐỌC BẢN ĐỒ NHIỆT:</b><br>
+            <b style="color:#1d4ed8;">✨ CÁCH ĐỌC BẢN ĐỒ NHIỆT:</b><br>
             - <b>Diện tích khối:</b> Đại diện tỷ trọng Tiền (Vốn Tồn Kho).<br>
             - <b>Màu sắc:</b> <span style="color:#15803d; font-weight:800;">Xanh lá (Hợp lý)</span> | <span style="color:#b45309; font-weight:800;">Cam (Nguy cơ thiếu)</span> | <span style="color:#b91c1c; font-weight:800;">Đỏ tươi (Chậm luân chuyển)</span>.
         </div>
         """, unsafe_allow_html=True)
 
         list_kh = sorted(customer_mapping['Khach_Hang'].unique().tolist())
-        selected_kh = st.multiselect("Gõ tên để tìm kiếm Khách Hàng:", list_kh)
+        selected_kh = st.multiselect("Gõ tên hoặc chọn để tìm kiếm Khách Hàng (có thể chọn nhiều):", list_kh)
         
         df_tab3 = df.copy()
         if selected_kh:
@@ -406,7 +406,7 @@ try:
             
             st.markdown(f"""
             <div class="smart-card-success">
-                <b style="color:#15803d;">📊 ĐÁNH GIÁ TỆP KHÁCH HÀNG:</b> Nhóm khách hàng này tiêu thụ <b>{len(df_tab3)} mã SKU</b>, tổng vốn lưu trữ là <b>{df_tab3['Ton_Kho_Value'].sum():,.0f} ₫</b>.
+                <b style="color:#15803d;">📊 ĐÁNH GIÁ KHÁCH HÀNG:</b> Nhóm khách hàng này tiêu thụ <b>{len(df_tab3)} mã SKU</b>, tổng vốn lưu trữ là <b>{df_tab3['Ton_Kho_Value'].sum():,.0f} ₫</b>.
             </div>
             """, unsafe_allow_html=True)
         
@@ -434,7 +434,7 @@ try:
         st.markdown("<h3 style='font-weight: 800;'>🚩 Cảnh báo Hàng Cận/Hết Hạn</h3>", unsafe_allow_html=True)
         risk_df = df[df['Het_HSD_Value'] > 0].copy()
         
-        st.metric(label="🚨 TỔNG GIÁ TRỊ THIỆT HẠI DỰ KIẾN", value=f"{risk_df['Het_HSD_Value'].sum():,.0f} ₫")
+        st.metric(label="🚨 GIÁ TRỊ THẤT THOÁT", value=f"{risk_df['Het_HSD_Value'].sum():,.0f} ₫")
         
         if not risk_df.empty:
             # Sửa đổi chú thích trục cột Y & X thành tiếng Việt
@@ -473,7 +473,7 @@ try:
         else: 
             st.markdown("<div class='smart-card-success'><b style='color:#15803d;'>✅ TRẠNG THÁI AN TOÀN:</b> Không ghi nhận rủi ro cận hạn.</div>", unsafe_allow_html=True)
 
-    # --- TAB 4: PHÂN LOẠI BÁN CHẠY (CHUYỂN XUỐNG VỊ TRÍ THỨ 4) ---
+    # --- TAB 4: PHÂN LOẠI SKU THEO DOANH SỐ (CHUYỂN XUỐNG VỊ TRÍ THỨ 4) ---
     with tab4:
         st.markdown("<h3 style='font-weight: 800;'>🔥 Top 20 SKU Bán Chạy Nhất</h3>", unsafe_allow_html=True)
         
@@ -506,7 +506,7 @@ try:
         )
         st.plotly_chart(fig_bar, use_container_width=True)
             
-        st.markdown("<h4 style='font-weight: 700; margin-top: 30px;'>2. Phân bổ Tỷ trọng (%) Top 20 SKU</h4>", unsafe_allow_html=True)
+        st.markdown("<h4 style='font-weight: 700; margin-top: 30px;'>2. Tỷ trọng Top 20 SKU</h4>", unsafe_allow_html=True)
         fig_pie_sales = px.pie(
             top_sku, 
             values='Xuat_Ban_SL', 
@@ -526,7 +526,7 @@ try:
         )
         st.plotly_chart(fig_pie_sales, use_container_width=True)
 
-    # --- TAB 5: TRA CỨU ĐỀ XUẤT ---
+    # --- TAB 5: TRA CỨU CHI TIẾT SKU ---
     with tab5:
         st.markdown("<h3 style='font-weight: 800;'>🔍 Tra cứu chi tiết & Đề xuất AI</h3>", unsafe_allow_html=True)
         selected_sku = st.selectbox("Chọn Mã SKU cần phân tích:", df['SKU'].unique())
@@ -546,7 +546,7 @@ try:
             c3.metric("KH Active", int(sku_data['Khach_Hang_Active']))
             c4.metric("S2S", f"{sku_data['S2S_Months']:.1f} T")
             
-            st.markdown("<h4 style='font-weight: 800; margin-top: 30px; margin-bottom: 20px;'>🧠 ENGINE ĐỀ XUẤT ĐIỀU PHỐI</h4>", unsafe_allow_html=True)
+            st.markdown("<h4 style='font-weight: 800; margin-top: 30px; margin-bottom: 20px;'>💡 ĐỀ XUẤT ĐIỀU PHỐI</h4>", unsafe_allow_html=True)
             
             if sku_data['Trang_Thai'] == "🔴 ĐỨT HÀNG": 
                 st.markdown(f"<div class='smart-card-error'><b style='color:#b91c1c;'>🚨 BÁO ĐỘNG ĐỨT HÀNG:</b> Tồn hiện tại thấp hơn Lead Time. Mua ngay <b>{sku_data['De_Xuat_Mua']:,.0f}</b> đơn vị. Hạn cuối: <b>{sku_data['Ngay_Dat_Hang_Du_Kien']}</b>.</div>", unsafe_allow_html=True)
