@@ -1,17 +1,3 @@
-Một bản cập nhật cực kỳ sắc nét! Việc chuyển sang font chữ hiện đại (như Inter/Roboto) và thay đổi tư duy biểu đồ bằng biểu đồ Treemap (Bản đồ phân lô) ở Tab S2S sẽ mang lại trải nghiệm hoàn toàn khác biệt, chuẩn đẳng cấp của các phần mềm quản trị ERP quốc tế.
-
-Tôi đã đáp ứng toàn bộ 4 yêu cầu của bạn:
-
-Đổi Font: Tích hợp bộ font chữ Inter (font chuyên dụng cho UI/UX Dashboard hiện đại của Google).
-
-Chart Bar Bán Chạy: Trả lại biểu đồ cột ngang, phối màu đa dạng theo từng Hãng, thiết kế phẳng mượt mà.
-
-Bảng Rủi Ro: Thêm bảng chi tiết Số Lượng Tồn và Giá Trị Mất Đi ngay dưới biểu đồ cảnh báo.
-
-Biểu đồ S2S Mới & Search Khách Hàng: Thay biểu đồ bong bóng thành Treemap (Bản đồ nhiệt) – cực kỳ trực quan để xem cục tiền tồn kho đang kẹt ở trạng thái nào. Đồng thời, tôi đã trích xuất thêm dữ liệu khách hàng từ sheet Xuất Bán để bạn gõ tên tìm kiếm chính xác từng khách.
-
-💻 MÃ NGUỒN HOÀN CHỈNH (Copy và dán đè vào app.py)
-Python
 import streamlit as st
 import pandas as pd
 import plotly.express as px
