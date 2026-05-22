@@ -9,39 +9,31 @@ def load_data():
     sheet_id = st.secrets["spreadsheet_id"]
     url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=xlsx"
     
-    # 1. Đọc sheet 'Tổng hợp' - Bỏ qua 2 dòng đầu, lấy dòng 3 làm tiêu đề
-    df_tonghop = pd.read_excel(url, sheet_name='Tổng hợp', header=2)
-    # Loại bỏ các cột 'Unnamed' và làm sạch khoảng trắng
-    df_tonghop = df_tonghop.loc[:, ~df_tonghop.columns.str.contains('^Unnamed')]
+    # --- Đọc sheet 'Tổng hợp' ---
+    df_tonghop = pd.read_excel(url, sheet_name='Tổng hợp', header=1)
     df_tonghop.columns = df_tonghop.columns.str.strip()
     
-    # Đổi tên các cột cần dùng (theo danh sách debug bạn đã gửi)
-    mapping = {
-        'Tên hàng': 'SKU', 
-        'Tồn kho': 'Ton_Kho_SL', 
-        'Xuất bán': 'Xuat_Ban_SL'
-    }
-    df_tonghop = df_tonghop.rename(columns=mapping)
+    # Đổi tên các cột cần dùng (đảm bảo khớp với file)
+    df_tonghop = df_tonghop.rename(columns={'Tên hàng': 'SKU', 'Tồn kho': 'Ton_Kho_SL', 'Xuất bán': 'Xuat_Ban_SL'})
     
-    # 2. Đọc sheet 'Xuất bán' - Lấy dòng 2 và 3 làm tiêu đề (MultiIndex)
-    df_xuatban = pd.read_excel(url, sheet_name='Xuất bán', header=[1, 2])
-    # Flatten MultiIndex: Nối các tên cột lại (ví dụ 'BÁN RA' + 'Số lượng' -> 'BAN_RA_SoLuong')
-    df_xuatban.columns = ['_'.join(col).strip() for col in df_xuatban.columns.values]
+    # --- Đọc sheet 'Xuất bán' ---
+    # Đọc header 1, sau đó chúng ta sẽ ép buộc cột B (index 1) là SKU
+    df_xuatban = pd.read_excel(url, sheet_name='Xuất bán', header=1)
     
-    # Làm sạch tên cột
-    df_xuatban.columns = df_xuatban.columns.str.replace(r'Unnamed: \d+_level_\d+', '', regex=True).str.strip()
-    
-    # Tìm cột SKU và Khách hàng dựa trên danh sách cột mới
-    # Dựa vào screenshot, SKU nằm ở cột 2, Khách hàng ở cột F (index 5)
+    # Tự động rename cột B (index 1) thành 'SKU' và tìm cột có chữ 'Khách hàng'
+    # Ép buộc cột B là SKU
     cols = df_xuatban.columns.tolist()
-    sku_col = [c for c in cols if 'SKU' in c][0]
-    khach_col = [c for c in cols if 'Khách hàng' in c][0]
+    cols[1] = 'SKU' 
+    df_xuatban.columns = cols
+    
+    # Tìm cột khách hàng (chọn cột nào có chữ 'Khách hàng')
+    khach_col = [c for c in df_xuatban.columns if 'Khách hàng' in str(c)][0]
     
     # Tính khách hàng active
-    active_customers = df_xuatban.groupby(sku_col)[khach_col].nunique().reset_index()
-    active_customers.rename(columns={sku_col: 'SKU', khach_col: 'Khach_Hang_Active'}, inplace=True)
+    active_customers = df_xuatban.groupby('SKU')[khach_col].nunique().reset_index()
+    active_customers.rename(columns={khach_col: 'Khach_Hang_Active'}, inplace=True)
     
-    # 3. Merge
+    # Merge
     df = pd.merge(df_tonghop, active_customers, on='SKU', how='left').fillna(0)
     return df
 
@@ -65,5 +57,5 @@ try:
     st.plotly_chart(fig)
     
 except Exception as e:
-    st.error(f"Lỗi: {e}")
-    st.write("Vui lòng đảm bảo Sheet 'Xuất bán' có cột SKU và Khách hàng chính xác.")
+    st.error(f"Lỗi hệ thống: {e}")
+    st.write("Dòng này giúp bạn debug: Hãy kiểm tra lại file Excel xem header có nằm đúng ở dòng 2 không nhé.")
