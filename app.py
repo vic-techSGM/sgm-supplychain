@@ -134,4 +134,75 @@ try:
     m1.metric("Tổng Vốn Tồn Kho", f"{df['Ton_Kho_Value'].sum():,.0f} ₫")
     m2.metric("Tổng Mã SKU", len(df))
     m3.metric("Số SKU Cần Đặt Hàng", len(df[df['De_Xuat_Mua'] > 0]))
-    m4.metric("Tổng KH Active", int(df['
+    m4.metric("Tổng KH Active", int(df['Khach_Hang_Active'].sum()))
+
+    # --- 5 TABS CHUYÊN SÂU ---
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+        "📊 TỔNG QUAN & DỰ TRÙ", 
+        "🔥 SKU BÁN CHẠY", 
+        "👥 TƯƠNG QUAN (S2S)", 
+        "🚩 RỦI RO HẠN DÙNG",
+        "🔍 TRA CỨU CHI TIẾT"
+    ])
+
+    with tab1:
+        st.subheader("Cơ cấu Vốn Tồn Kho")
+        col_pie1, col_pie2 = st.columns(2)
+        with col_pie1:
+            fig_pie1 = px.pie(df, values='Ton_Kho_Value', names='Nganh_Hang', hole=0.4, title="Theo Ngành Hàng")
+            st.plotly_chart(fig_pie1, use_container_width=True)
+        with col_pie2:
+            fig_pie2 = px.pie(df, values='Ton_Kho_Value', names='Hang', hole=0.4, title="Theo Hãng Cung Cấp")
+            st.plotly_chart(fig_pie2, use_container_width=True)
+
+        st.subheader("🛒 Bảng Kế hoạch Đặt hàng tự động")
+        display_cols = ['SKU', 'Chung_Loai', 'Ton_Kho_SL', 'S2S_Months', 'Khach_Hang_Active', 'ROP', 'De_Xuat_Mua', 'Trang_Thai', 'Canh_Bao_S2S']
+        st.dataframe(df[display_cols].sort_values(by='De_Xuat_Mua', ascending=False), use_container_width=True)
+
+    with tab2:
+        st.subheader("Top 20 SKU có sản lượng bán cao nhất")
+        top_sku = df.sort_values(by='Xuat_Ban_SL', ascending=False).head(20)
+        fig_bar = px.bar(top_sku, x='Xuat_Ban_SL', y='SKU', orientation='h', color='Hang', title="Sản lượng xuất bán (Lịch sử)")
+        st.plotly_chart(fig_bar, use_container_width=True)
+
+    with tab3:
+        st.subheader("Phân tích S2S & Mức độ Active của Khách hàng")
+        fig_scatter = px.scatter(
+            df, x="Khach_Hang_Active", y="S2S_Months", size="Ton_Kho_Value", color="Canh_Bao_S2S",
+            hover_name="SKU", 
+            labels={"Khach_Hang_Active": "Số Lượng Khách Hàng", "S2S_Months": "Tháng Tồn Kho (S2S)"},
+            color_discrete_map={"⚠️ Chậm luân chuyển": "#d32f2f", "🔥 Rủi ro thiếu hàng": "#f57c00", "✅ Hợp lý": "#388e3c"}
+        )
+        st.plotly_chart(fig_scatter, use_container_width=True)
+
+    with tab4:
+        st.subheader("Cảnh báo Hàng Cận/Hết Date")
+        if df['Het_HSD_Value'].sum() > 0:
+            st.error(f"Tổng thiệt hại dự kiến: {df['Het_HSD_Value'].sum():,.0f} ₫")
+            risk_df =df[df['Het_HSD_Value'] > 0]
+            fig_risk = px.bar(risk_df, x='SKU', y='Het_HSD_Value', color='Hang', title="Giá trị thiệt hại theo SKU")
+            st.plotly_chart(fig_risk, use_container_width=True)
+            st.dataframe(risk_df[['SKU', 'Hang', 'Ton_Kho_SL', 'Het_HSD_Value']], use_container_width=True)
+        else:
+            st.success("Tất cả SKU trong bộ lọc hiện tại đều an toàn về Hạn sử dụng.")
+
+    with tab5:
+        st.subheader("Tra cứu Thông số chi tiết từng SKU")
+        selected_sku = st.selectbox("Gõ hoặc chọn Mã SKU cần kiểm tra:", df['SKU'].unique())
+        
+        if selected_sku:
+            sku_data = df[df['SKU'] == selected_sku].iloc[0]
+            c1, c2, c3, c4 = st.columns(4)
+            c1.metric("Tồn kho hiện tại", f"{sku_data['Ton_Kho_SL']:,.0f}")
+            c2.metric("Sức bán/ngày", f"{sku_data['Daily_Sales']:.2f}")
+            c3.metric("KH Active", int(sku_data['Khach_Hang_Active']))
+            c4.metric("Tháng tồn (S2S)", f"{sku_data['S2S_Months']:.1f} tháng")
+            
+            st.markdown("---")
+            st.write(f"**Trạng thái nhập hàng:** {sku_data['Trang_Thai']}")
+            st.write(f"**Cảnh báo luân chuyển:** {sku_data['Canh_Bao_S2S']}")
+            st.write(f"**Điểm đặt hàng (ROP):** {sku_data['ROP']:,.0f}")
+            st.write(f"**Đề xuất mua ngay:** {sku_data['De_Xuat_Mua']:,.0f}")
+
+except Exception as e:
+    st.error(f"Lỗi khởi tạo hệ thống: {e}")
