@@ -81,61 +81,62 @@ st.markdown("""
     }
 
     /* -----------------------------------
-       2. HIỆU ỨNG THẺ CARD 3D FLOATING (MÀU NGÀ / CAM PASTEL)
+       2. SCALE LẠI HIỂN THỊ CÁC THẺ CARD LỚN GỌN GÀNG, THẨM MỸ HƠN
        ----------------------------------- */
     div[data-testid="stMetric"] {
         background: linear-gradient(145deg, #fffdfa, #fdf4e7) !important; 
-        border-radius: 20px !important;
-        padding: 25px !important;
-        box-shadow: 6px 12px 24px rgba(139,92,26,0.08), -2px -2px 10px rgba(255,255,255,0.8) !important;
-        border-left: 6px solid #fb923c !important; 
+        border-radius: 16px !important;
+        padding: 16px 20px !important;
+        box-shadow: 6px 10px 20px rgba(139,92,26,0.06), -2px -2px 8px rgba(255,255,255,0.8) !important;
+        border-left: 5px solid #fb923c !important; 
         border-top: 1px solid rgba(251,146,60,0.1) !important;
         transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
     }
     div[data-testid="stMetric"]:hover { 
-        transform: translateY(-8px) scale(1.02); 
-        box-shadow: 10px 18px 30px rgba(139,92,26,0.12), -2px -2px 12px rgba(255,255,255,0.9) !important; 
+        transform: translateY(-5px) scale(1.01); 
+        box-shadow: 8px 14px 24px rgba(139,92,26,0.1), -2px -2px 10px rgba(255,255,255,0.9) !important; 
     }
     div[data-testid="stMetric"] label { 
         color: #c2410c !important; 
-        font-size: 15px !important; 
+        font-size: 11px !important; 
         text-transform: uppercase; 
         font-weight: 800 !important; 
-        letter-spacing: 0.5px; 
+        letter-spacing: 0.8px; 
     }
     div[data-testid="stMetric"] div[data-testid="stMetricValue"] { 
         color: #1e293b !important; 
-        font-size: 36px !important; 
+        font-size: 26px !important; 
         font-weight: 900 !important; 
         text-shadow: none !important;
+        margin-top: 4px;
     }
 
     /* THẺ METRIC TÙY BIẾN CHO HOVER TOOLTIP TRONG TAB 5 */
     .custom-metric-card {
         background: linear-gradient(145deg, #fffdfa, #fdf4e7) !important; 
-        border-radius: 20px !important;
-        padding: 25px !important;
-        box-shadow: 6px 12px 24px rgba(139,92,26,0.08), -2px -2px 10px rgba(255,255,255,0.8) !important;
-        border-left: 6px solid #fb923c !important; 
+        border-radius: 16px !important;
+        padding: 16px 20px !important;
+        box-shadow: 6px 10px 20px rgba(139,92,26,0.06), -2px -2px 8px rgba(255,255,255,0.8) !important;
+        border-left: 5px solid #fb923c !important; 
         border-top: 1px solid rgba(251,146,60,0.1) !important;
         transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
         position: relative;
         cursor: pointer;
     }
     .custom-metric-card:hover { 
-        transform: translateY(-8px) scale(1.02); 
-        box-shadow: 10px 18px 30px rgba(139,92,26,0.12), -2px -2px 12px rgba(255,255,255,0.9) !important; 
+        transform: translateY(-5px) scale(1.01); 
+        box-shadow: 8px 14px 24px rgba(139,92,26,0.1), -2px -2px 10px rgba(255,255,255,0.9) !important; 
     }
     .custom-metric-card .metric-label { 
         color: #c2410c !important; 
-        font-size: 15px !important; 
+        font-size: 11px !important; 
         text-transform: uppercase; 
         font-weight: 800 !important; 
-        letter-spacing: 0.5px; 
+        letter-spacing: 0.8px; 
     }
     .custom-metric-card .metric-value { 
         color: #1e293b !important; 
-        font-size: 36px !important; 
+        font-size: 26px !important; 
         font-weight: 900 !important; 
         margin-top: 4px;
     }
@@ -172,9 +173,9 @@ st.markdown("""
         background: linear-gradient(145deg, #f8fafc, #f1f5f9) !important; 
         border: 1px solid #cbd5e1 !important; 
         border-left: 5px solid #f59e0b !important; 
-        padding: 20px; 
+        padding: 16px 20px !important; 
         border-radius: 12px; 
-        min-height: 120px;
+        min-height: 100px;
         position: relative;
         cursor: pointer;
     }
@@ -547,10 +548,18 @@ try:
             )
             fig_pie_nganh.update_traces(textposition='inside', textinfo='percent')
             fig_pie_nganh.update_layout(
-                showlegend=False, 
+                showlegend=True,
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=-0.35,
+                    xanchor="center",
+                    x=0.5,
+                    font=dict(size=10)
+                ),
                 paper_bgcolor='rgba(0,0,0,0)', 
                 plot_bgcolor='rgba(0,0,0,0)',
-                margin=dict(t=50, b=20, l=10, r=10),
+                margin=dict(t=40, b=120, l=10, r=10),
                 font=dict(family="Montserrat", color="#1e293b")
             )
             st.plotly_chart(fig_pie_nganh, use_container_width=True)
@@ -563,10 +572,18 @@ try:
             )
             fig_pie_hang.update_traces(textposition='inside', textinfo='percent')
             fig_pie_hang.update_layout(
-                showlegend=False, 
+                showlegend=True,
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=-0.35,
+                    xanchor="center",
+                    x=0.5,
+                    font=dict(size=10)
+                ),
                 paper_bgcolor='rgba(0,0,0,0)', 
                 plot_bgcolor='rgba(0,0,0,0)',
-                margin=dict(t=50, b=20, l=10, r=10),
+                margin=dict(t=40, b=120, l=10, r=10),
                 font=dict(family="Montserrat", color="#1e293b")
             )
             st.plotly_chart(fig_pie_hang, use_container_width=True)
@@ -587,22 +604,23 @@ try:
         
         # SỬA LỖI HIỂN THỊ TOOLTIP HOÀN TOÀN BẰNG CẤU HÌNH COLUMN_CONFIG (Mục 1)
         # Giữ đúng kiểu NumberColumn nhưng sử dụng format="%d" để không áp dụng phân tách hàng nghìn (Mục 2)
+        # Bổ sung tooltip tiếng Việt chi tiết (Mục 1) cho từng header cột tương ứng
         st.dataframe(
             display_df, 
             use_container_width=True, 
             height=350,
             hide_index=True,
             column_config={
-                "Mã SKU": st.column_config.TextColumn("Mã SKU"),
-                "Hãng": st.column_config.TextColumn("Hãng"),
-                "Số Lượng Tồn Kho": st.column_config.NumberColumn("Số Lượng Tồn Kho", format="%d"),
-                "Khách Hàng Active": st.column_config.NumberColumn("Khách Hàng Active", format="%d"), 
-                "Dự Trù Trong Tháng": st.column_config.NumberColumn("Dự Trù Trong Tháng", format="%d"),
-                "Dự Trù 3 Tháng (Quý)": st.column_config.NumberColumn("Dự Trù 3 Tháng (Quý)", format="%d"),
-                "Ngày Đặt Hàng (ROP)": st.column_config.TextColumn("Ngày Đặt Hàng (ROP)"),
-                "Số Lượng Cần Mua": st.column_config.NumberColumn("Số Lượng Cần Mua", format="%d"),
-                "Trạng Thái": st.column_config.TextColumn("Trạng Thái"),
-                "Cảnh Báo S2S": st.column_config.TextColumn("Cảnh Báo S2S")
+                "Mã SKU": st.column_config.TextColumn("Mã SKU", help="Mã định danh duy nhất của sản phẩm"),
+                "Hãng": st.column_config.TextColumn("Hãng", help="Thương hiệu/Nhà sản xuất sản phẩm"),
+                "Số Lượng Tồn Kho": st.column_config.NumberColumn("Số Lượng Tồn Kho", format="%d", help="Số lượng sản phẩm hiện có trong kho thực tế"),
+                "Khách Hàng Active": st.column_config.NumberColumn("Khách Hàng Active", format="%d", help="Số lượng khách hàng duy nhất đã mua mặt hàng này tính từ năm 2026"), 
+                "Dự Trù Trong Tháng": st.column_config.NumberColumn("Dự Trù Trong Tháng", format="%d", help="Nhu cầu sản lượng dự kiến tiêu thụ trong 30 ngày tiếp theo"),
+                "Dự Trù 3 Tháng (Quý)": st.column_config.NumberColumn("Dự Trù 3 Tháng (Quý)", format="%d", help="Nhu cầu sản lượng dự kiến tiêu thụ trong 90 ngày tiếp theo (quý)"),
+                "Ngày Đặt Hàng (ROP)": st.column_config.TextColumn("Ngày Đặt Hàng (ROP)", help="Thời điểm tối ưu cần thực hiện đặt hàng PO mới"),
+                "Số Lượng Cần Mua": st.column_config.NumberColumn("Số Lượng Cần Mua", format="%d", help="Số lượng tối ưu cần lên đơn mua bổ sung"),
+                "Trạng Thái": st.column_config.TextColumn("Trạng Thái", help="Đánh giá mức độ an toàn của kho hàng"),
+                "Cảnh Báo S2S": st.column_config.TextColumn("Cảnh Báo S2S", help="Vòng quay luân chuyển hàng tồn kho")
             }
         )
         
@@ -748,22 +766,51 @@ try:
                 </div>
                 """, unsafe_allow_html=True)
                 
-                # Hiển thị biểu đồ tròn % sản lượng từng SKU tiêu thụ của 1 khách hàng
+                # Hiển thị biểu đồ cột trực quan hoá sản lượng từng SKU tiêu thụ của 1 khách hàng (Mục 1)
                 st.markdown("<br>", unsafe_allow_html=True)
                 sku_shares = cust_tx.groupby('SKU')['Quantity'].sum().reset_index()
-                fig_pie_sku = px.pie(
-                    sku_shares, values='Quantity', names='SKU',
-                    title=f"Tỷ lệ % Tổng sản lượng đóng góp của từng SKU - Khách hàng {cust}",
+                sku_shares = sku_shares.sort_values(by='Quantity', ascending=False)
+                
+                fig_bar_sku = px.bar(
+                    sku_shares, 
+                    x='SKU', 
+                    y='Quantity',
+                    text='Quantity',
+                    color='SKU',
+                    title=f"Sản lượng tiêu thụ chi tiết từng SKU - Khách hàng {cust}",
+                    labels={'Quantity': 'Sản lượng tiêu thụ', 'SKU': 'Mã SKU'},
                     color_discrete_sequence=px.colors.qualitative.Pastel
                 )
-                fig_pie_sku.update_traces(textposition='inside', textinfo='percent+label')
-                fig_pie_sku.update_layout(
+                fig_bar_sku.update_traces(
+                    texttemplate='%{text:,.0f}', 
+                    textposition='outside',
+                    marker=dict(cornerradius=6)
+                )
+                fig_bar_sku.update_layout(
+                    showlegend=False,
                     paper_bgcolor='rgba(0,0,0,0)', 
                     plot_bgcolor='rgba(0,0,0,0)',
                     margin=dict(t=50, b=20, l=10, r=10),
                     font=dict(family="Montserrat", color="#1e293b")
                 )
-                st.plotly_chart(fig_pie_sku, use_container_width=True)
+                st.plotly_chart(fig_bar_sku, use_container_width=True)
+                
+                # Bổ sung hộp phân tích thông minh dựa trên Bar Chart sản lượng (Mục 2)
+                total_skus = len(sku_shares)
+                total_qty = sku_shares['Quantity'].sum()
+                top_sku_row = sku_shares.iloc[0]
+                top_sku_id = top_sku_row['SKU']
+                top_sku_qty = top_sku_row['Quantity']
+                top_sku_pct = (top_sku_qty / total_qty) * 100 if total_qty > 0 else 0
+                
+                st.markdown(f"""
+                <div class="smart-card-info" style="margin-top: 15px;">
+                    <b style="color:#1e3a8a; font-size:15px;">💡 PHÂN TÍCH TIÊU THỤ THÔNG MINH (UP-TO-DATE):</b><br><br>
+                    • Khách hàng <b>{cust}</b> mua nhiều nhất mã SKU <b>{top_sku_id}</b> với sản lượng đạt <b>{top_sku_qty:,.0f} sản phẩm</b>, chiếm khoảng <b>{top_sku_pct:.1f}%</b> tổng sản lượng tiêu thụ của khách hàng này.<br>
+                    • Cơ cấu giỏ hàng gồm <b>{total_skus} mã SKU</b> khác nhau, tổng lượng sản phẩm tiêu thụ đạt <b>{total_qty:,.0f} đơn vị</b>.<br>
+                    • Bình quan mỗi mã SKU khách hàng tiêu thụ khoảng <b>{total_qty/total_skus:.1f} sản phẩm</b>. Đề xuất ưu tiên chào bán thêm các chủng loại bổ trợ cho mã bán chạy nhất.
+                </div>
+                """, unsafe_allow_html=True)
 
         # --- THUẬT TOÁN SO SÁNH PHÂN TÍCH NHIỀU KHÁCH HÀNG (KHI CHỌN >= 2 KHÁCH HÀNG) ---
         elif len(selected_kh) >= 2:
