@@ -200,9 +200,10 @@ st.markdown("""
         opacity: 1;
     }
 
-    /* BOLD HEADER CHO BẢNG THỐNG KÊ DATAFRAME */
+    /* IN ĐẬM TOÀN BỘ TIÊU ĐỀ (HEADER) CỦA BẢNG DATAFRAME */
     [data-testid="stDataFrame"] th, 
     [data-testid="stDataFrame"] [role="columnheader"] p,
+    [data-testid="stDataFrame"] [role="columnheader"] span,
     [data-testid="stDataFrame"] [role="columnheader"] {
         font-weight: 800 !important;
         color: #0f172a !important;
@@ -382,59 +383,58 @@ def load_data():
     df = pd.merge(df_th, active_kh, on='SKU', how='left').fillna(0)
     return df, customer_mapping, df_xb_clean
 
-# --- THUẬT TOÁN ĐỊNH DẠNG XUẤT FILE PO EXCEL CHUYÊN NGHIỆP ---
+# --- THUẬT TOÁN ĐỊNH DẠNG FILE PO EXCEL BẰNG OPENPYXL (MẶC ĐỊNH SẴN CÓ) ---
 def to_excel(df_to_export):
     output = io.BytesIO()
-    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
         df_to_export.to_excel(writer, index=False, sheet_name='SGM_PO_Export')
-        workbook  = writer.book
+        workbook = writer.book
         worksheet = writer.sheets['SGM_PO_Export']
         
-        # Định nghĩa các Style định dạng
-        header_format = workbook.add_format({
-            'bold': True,
-            'text_wrap': True,
-            'valign': 'vcenter',
-            'align': 'center',
-            'fg_color': '#388e3c',
-            'font_color': '#FFFFFF',
-            'border': 1,
-            'font_name': 'Segoe UI',
-            'font_size': 11
-        })
+        from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+        from openpyxl.utils import get_column_letter
         
-        cell_format = workbook.add_format({
-            'font_name': 'Segoe UI',
-            'font_size': 10,
-            'border': 1,
-            'valign': 'vcenter'
-        })
+        # Định dạng Style màu xanh thương hiệu SGM
+        header_fill = PatternFill(start_color="388E3C", end_color="388E3C", fill_type="solid")
+        header_font = Font(name="Segoe UI", size=11, bold=True, color="FFFFFF")
+        cell_font = Font(name="Segoe UI", size=10)
         
-        num_format = workbook.add_format({
-            'num_format': '#,##0',
-            'font_name': 'Segoe UI',
-            'font_size': 10,
-            'border': 1,
-            'valign': 'vcenter',
-            'align': 'right'
-        })
-
-        # Định dạng Header
-        worksheet.set_row(0, 28)
-        for col_num, value in enumerate(df_to_export.columns.values):
-            worksheet.write(0, col_num, value, header_format)
+        thin_border = Border(
+            left=Side(style='thin', color='DDDDDD'),
+            right=Side(style='thin', color='DDDDDD'),
+            top=Side(style='thin', color='DDDDDD'),
+            bottom=Side(style='thin', color='DDDDDD')
+        )
+        
+        # Thiết kế Header
+        for col_idx in range(1, len(df_to_export.columns) + 1):
+            cell = worksheet.cell(row=1, column=col_idx)
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = Alignment(horizontal="center", vertical="center")
             
-        # Định dạng chiều rộng và kiểu dữ liệu từng cột tự động
-        for i, col in enumerate(df_to_export.columns):
-            max_len = max(df_to_export[col].astype(str).map(len).max(), len(col)) + 4
-            col_width = min(max(max_len, 12), 40)
-            
-            # Cột số lượng/giá trị áp dụng định dạng phân tách hàng nghìn
-            if df_to_export[col].dtype in ['int64', 'float64'] and "Active" not in col:
-                worksheet.set_column(i, i, col_width, num_format)
-            else:
-                worksheet.set_column(i, i, col_width, cell_format)
+        # Thiết kế nội dung bảng dữ liệu
+        for row_idx in range(2, len(df_to_export) + 2):
+            for col_idx in range(1, len(df_to_export.columns) + 1):
+                cell = worksheet.cell(row=row_idx, column=col_idx)
+                cell.font = cell_font
+                cell.border = thin_border
                 
+                val = cell.value
+                if isinstance(val, (int, float)):
+                    cell.alignment = Alignment(horizontal="right")
+                    # Định dạng phân tách hàng nghìn cho số lượng và giá trị (Ngoại trừ Khách Hàng Active)
+                    if "Active" not in df_to_export.columns[col_idx-1]:
+                        cell.number_format = '#,##0'
+                else:
+                    cell.alignment = Alignment(horizontal="left")
+                    
+        # Tự động điều chỉnh độ rộng cột
+        for col in worksheet.columns:
+            max_len = max(len(str(cell.value or '')) for cell in col)
+            col_letter = get_column_letter(col[0].column)
+            worksheet.column_dimensions[col_letter].width = min(max(max_len + 3, 12), 40)
+            
     return output.getvalue()
 
 # ==========================================
@@ -576,30 +576,24 @@ try:
             'Số Lượng Cần Mua', 'Trạng Thái', 'Cảnh Báo S2S'
         ]
         
-        # Format dữ liệu số, loại bỏ hoàn toàn dấu phẩy ở hàng đơn vị của Khách Hàng Active để tránh hiểu nhầm
-        styled_df = display_df.style.format({
-            'Số Lượng Tồn Kho': "{:,.0f}",
-            'Khách Hàng Active': "{:.0f}",
-            'Dự Trù Trong Tháng': "{:,.0f}",
-            'Dự Trù 3 Tháng (Quý)': "{:,.0f}",
-            'Số Lượng Cần Mua': "{:,.0f}"
-        })
+        # Chuyển đổi Khách Hàng Active sang kiểu chuỗi (String) nguyên bản để triệt tiêu hoàn toàn dấu phân cách hàng nghìn (Mục 2)
+        display_df['Khách Hàng Active'] = display_df['Khách Hàng Active'].astype(int).astype(str)
         
-        # Khai báo cấu hình cột tĩnh để sửa lỗi hiển thị Tooltip lộn xộn/chồng đè của Streamlit
+        # SỬA LỖI GIỮA BỘ ĐỊNH DẠNG VÀ COLUMN_CONFIG (GIÚP KHẮC PHỤC HOÀN TOÀN LỖI CHỒNG CHÉO TOOLTIP KHI RÊ CHUỘT)
         st.dataframe(
-            styled_df, 
+            display_df, 
             use_container_width=True, 
             height=350,
             hide_index=True,
             column_config={
                 "Mã SKU": st.column_config.TextColumn("Mã SKU"),
                 "Hãng": st.column_config.TextColumn("Hãng"),
-                "Số Lượng Tồn Kho": st.column_config.NumberColumn("Số Lượng Tồn Kho"),
-                "Khách Hàng Active": st.column_config.NumberColumn("Khách Hàng Active", format="%d"),
-                "Dự Trù Trong Tháng": st.column_config.NumberColumn("Dự Trù Trong Tháng"),
-                "Dự Trù 3 Tháng (Quý)": st.column_config.NumberColumn("Dự Trù 3 Tháng (Quý)"),
+                "Số Lượng Tồn Kho": st.column_config.NumberColumn("Số Lượng Tồn Kho", format="%d"),
+                "Khách Hàng Active": st.column_config.TextColumn("Khách Hàng Active"), # Đọc dạng chuỗi không thêm phân tách
+                "Dự Trù Trong Tháng": st.column_config.NumberColumn("Dự Trù Trong Tháng", format="%d"),
+                "Dự Trù 3 Tháng (Quý)": st.column_config.NumberColumn("Dự Trù 3 Tháng (Quý)", format="%d"),
                 "Ngày Đặt Hàng (ROP)": st.column_config.TextColumn("Ngày Đặt Hàng (ROP)"),
-                "Số Lượng Cần Mua": st.column_config.NumberColumn("Số Lượng Cần Mua"),
+                "Số Lượng Cần Mua": st.column_config.NumberColumn("Số Lượng Cần Mua", format="%d"),
                 "Trạng Thái": st.column_config.TextColumn("Trạng Thái"),
                 "Cảnh Báo S2S": st.column_config.TextColumn("Cảnh Báo S2S")
             }
@@ -622,7 +616,7 @@ try:
                 default=po_df.columns.tolist()
             )
             
-            # Xuất PO dạng Excel .xlsx chuẩn hóa định dạng ready-to-use
+            # Xuất PO bằng openpyxl an toàn tuyệt đối, định dạng chuẩn gửi nhà cung cấp
             excel_data = to_excel(po_df[export_cols])
             
             st.download_button(
