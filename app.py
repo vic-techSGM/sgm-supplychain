@@ -279,6 +279,7 @@ def load_data():
     
     df_th_raw = pd.read_excel(url, sheet_name='Tổng hợp', header=1)
     
+    # 1. Tìm vị trí cột HSD
     hsd_col_idx = None
     for idx, col in enumerate(df_th_raw.columns):
         if any(keyword in str(col).lower() for keyword in ['hsd', 'hạn', 'date', 'quá hạn']):
@@ -288,26 +289,53 @@ def load_data():
     if hsd_col_idx is None and df_th_raw.shape[1] > 17:
         hsd_col_idx = 17
 
-    target_indices = [1, 2, 3, 4, 10, 14, 15] 
-    if hsd_col_idx is not None and hsd_col_idx not in target_indices:
-        target_indices.append(hsd_col_idx)
-        
-    df_th = df_th_raw.iloc[:, target_indices].copy()
+    # 2. Tìm vị trí cột Đơn vị tính (ĐVT) tự động từ cấu trúc File (Mục 1)
+    dvt_col_idx = None
+    for idx, col in enumerate(df_th_raw.columns):
+        if any(keyword in str(col).lower() for keyword in ['đvt', 'đơn vị tính', 'dvt', 'unit', 'đơn vị']):
+            dvt_col_idx = idx
+            break
+
+    # 3. Tạo ánh xạ cột an toàn để tránh ghi đè chỉ số cột
+    col_mapping = {
+        1: 'Nganh_Hang',
+        2: 'Chung_Loai',
+        3: 'Hang',
+        4: 'SKU',
+        10: 'Xuat_Ban_SL',
+        14: 'Ton_Kho_SL',
+        15: 'Ton_Kho_Value'
+    }
     
-    base_cols = ['Nganh_Hang', 'Chung_Loai', 'Hang', 'SKU', 'Xuat_Ban_SL', 'Ton_Kho_SL', 'Ton_Kho_Value']
-    if hsd_col_idx is not None:
-        df_th.columns = base_cols + ['Het_HSD_Value']
-    else:
-        df_th.columns = base_cols
-        df_th['Het_HSD_Value'] = 0
+    if hsd_col_idx is not None and hsd_col_idx not in col_mapping:
+        col_mapping[hsd_col_idx] = 'Het_HSD_Value'
+        
+    if dvt_col_idx is not None and dvt_col_idx not in col_mapping:
+        col_mapping[dvt_col_idx] = 'DVT'
+
+    # Lọc và đổi tên cột
+    sorted_keys = sorted(list(col_mapping.keys()))
+    df_th = df_th_raw.iloc[:, sorted_keys].copy()
+    df_th.columns = [col_mapping[k] for k in sorted_keys]
+    
+    # Gán các giá trị mặc định phòng trường hợp cột thiếu dữ liệu
+    if 'Het_HSD_Value' not in df_th.columns:
+        df_th['Het_HSD_Value'] = 0.0
+    if 'DVT' not in df_th.columns:
+        df_th['DVT'] = 'Cái'
         
     df_th = df_th.dropna(subset=['SKU'])
     df_th['SKU'] = df_th['SKU'].astype(str).str.strip()
     
     for col in ['Nganh_Hang', 'Chung_Loai', 'Hang']:
-        if col in df_th.columns: df_th[col] = df_th[col].fillna('Khác').astype(str).str.strip()
+        if col in df_th.columns: 
+            df_th[col] = df_th[col].fillna('Khác').astype(str).str.strip()
+            
+    df_th['DVT'] = df_th['DVT'].fillna('Cái').astype(str).str.strip()
+    
     for col in ['Xuat_Ban_SL', 'Ton_Kho_SL', 'Ton_Kho_Value', 'Het_HSD_Value']:
-        if col in df_th.columns: df_th[col] = pd.to_numeric(df_th[col], errors='coerce').fillna(0)
+        if col in df_th.columns: 
+            df_th[col] = pd.to_numeric(df_th[col], errors='coerce').fillna(0)
 
     # --- ĐỌC VÀ LỌC DỮ LIỆU SHEET XUẤT BÁN ---
     df_xb_raw = pd.read_excel(url, sheet_name='Xuất bán', header=1)
@@ -592,9 +620,10 @@ try:
 
         st.markdown("<h4 style='font-weight: 800; margin-top: 30px;'>🛒 Thống kê dự trù</h4>", unsafe_allow_html=True)
         
-        display_df = df[['SKU', 'Hang', 'Ton_Kho_SL', 'Khach_Hang_Active', 'Du_Tru_Thang', 'Du_Tru_Quy', 'Ngay_Dat_Hang_Du_Kien', 'De_Xuat_Mua', 'Trang_Thai', 'Canh_Bao_S2S']].copy()
+        # Bổ sung trường dữ liệu ĐVT vào bảng Thống kê dự trù (Mục 2)
+        display_df = df[['SKU', 'Hang', 'DVT', 'Ton_Kho_SL', 'Khach_Hang_Active', 'Du_Tru_Thang', 'Du_Tru_Quy', 'Ngay_Dat_Hang_Du_Kien', 'De_Xuat_Mua', 'Trang_Thai', 'Canh_Bao_S2S']].copy()
         display_df.columns = [
-            'Mã SKU', 'Hãng', 'Số Lượng Tồn Kho', 'Khách Hàng Active', 
+            'Mã SKU', 'Hãng', 'ĐVT', 'Số Lượng Tồn Kho', 'Khách Hàng Active', 
             'Dự Trù Trong Tháng', 'Dự Trù 3 Tháng (Quý)', 'Ngày Đặt Hàng (ROP)', 
             'Số Lượng Cần Mua', 'Trạng Thái', 'Cảnh Báo S2S'
         ]
@@ -603,8 +632,7 @@ try:
         display_df['Khách Hàng Active'] = display_df['Khách Hàng Active'].astype(int)
         
         # SỬA LỖI HIỂN THỊ TOOLTIP HOÀN TOÀN BẰNG CẤU HÌNH COLUMN_CONFIG (Mục 1)
-        # Giữ đúng kiểu NumberColumn nhưng sử dụng format="%d" để không áp dụng phân tách hàng nghìn (Mục 2)
-        # Bổ sung tooltip tiếng Việt chi tiết (Mục 1) cho từng header cột tương ứng
+        # Bổ sung tooltip tiếng Việt chi tiết (Mục 1) cho từng header cột tương ứng, bao gồm ĐVT (Mục 2)
         st.dataframe(
             display_df, 
             use_container_width=True, 
@@ -613,6 +641,7 @@ try:
             column_config={
                 "Mã SKU": st.column_config.TextColumn("Mã SKU", help="Mã định danh duy nhất của sản phẩm"),
                 "Hãng": st.column_config.TextColumn("Hãng", help="Thương hiệu/Nhà sản xuất sản phẩm"),
+                "ĐVT": st.column_config.TextColumn("ĐVT", help="Đơn vị tính của sản phẩm (Chai, Hộp, Bộ...)"),
                 "Số Lượng Tồn Kho": st.column_config.NumberColumn("Số Lượng Tồn Kho", format="%d", help="Số lượng sản phẩm hiện có trong kho thực tế"),
                 "Khách Hàng Active": st.column_config.NumberColumn("Khách Hàng Active", format="%d", help="Số lượng khách hàng duy nhất đã mua mặt hàng này tính từ năm 2026"), 
                 "Dự Trù Trong Tháng": st.column_config.NumberColumn("Dự Trù Trong Tháng", format="%d", help="Nhu cầu sản lượng dự kiến tiêu thụ trong 30 ngày tiếp theo"),
@@ -884,8 +913,9 @@ try:
             )
             st.plotly_chart(fig_risk, use_container_width=True)
             
-            display_risk_df = risk_df[['SKU', 'Hang', 'Ton_Kho_SL', 'Het_HSD_Value']].copy()
-            display_risk_df.columns = ['Mã SKU', 'Hãng', 'Số Lượng Tồn Kho', 'Giá trị thất thoát']
+            # Bổ sung ĐVT vào bảng thống kê rủi ro hạn dùng (Mục 3)
+            display_risk_df = risk_df[['SKU', 'Hang', 'DVT', 'Ton_Kho_SL', 'Het_HSD_Value']].copy()
+            display_risk_df.columns = ['Mã SKU', 'Hãng', 'ĐVT', 'Số Lượng Tồn Kho', 'Giá trị thất thoát']
             
             styled_risk = display_risk_df.style.format({
                 'Số Lượng Tồn Kho': "{:,.0f}", 
@@ -974,7 +1004,8 @@ try:
             
             st.markdown("<br>", unsafe_allow_html=True)
             c1, c2, c3, c4 = st.columns(4)
-            c1.metric("Tồn thực tế", f"{sku_data['Ton_Kho_SL']:,.0f}")
+            # Gán ĐVT chính xác vào metric hiển thị Tồn thực tế (Mục 4)
+            c1.metric("Tồn thực tế", f"{sku_data['Ton_Kho_SL']:,.0f} {sku_data['DVT']}")
             c2.metric("Bán/ngày", f"{sku_data['Daily_Sales']:.2f}")
             
             # Thẻ KH Active có hỗ trợ Popup Tooltip khi rê chuột
@@ -994,10 +1025,11 @@ try:
             
             st.markdown("<h4 style='font-weight: 800; margin-top: 30px; margin-bottom: 20px;'>💡 ĐỀ XUẤT ĐIỀU PHỐI</h4>", unsafe_allow_html=True)
             
+            # Bổ sung ĐVT vào nội dung đề xuất đặt mua tự động của AI (Mục 4)
             if sku_data['Trang_Thai'] == "🔴 ĐỨT HÀNG": 
-                st.markdown(f"<div class='smart-card-error'><b style='color:#b91c1c;'>🚨 BÁO ĐỘNG ĐỨT HÀNG:</b> Tồn hiện tại thấp hơn Lead Time. Mua ngay <b>{sku_data['De_Xuat_Mua']:,.0f}</b> đơn vị. Hạn cuối: <b>{sku_data['Ngay_Dat_Hang_Du_Kien']}</b>.</div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='smart-card-error'><b style='color:#b91c1c;'>🚨 BÁO ĐỘNG ĐỨT HÀNG:</b> Tồn hiện tại thấp hơn Lead Time. Mua ngay <b>{sku_data['De_Xuat_Mua']:,.0f} {sku_data['DVT']}</b>. Hạn cuối: <b>{sku_data['Ngay_Dat_Hang_Du_Kien']}</b>.</div>", unsafe_allow_html=True)
             elif sku_data['Trang_Thai'] == "🟡 CẦN NHẬP": 
-                st.markdown(f"<div class='smart-card-warning'><b style='color:#b45309;'>⚠️ KẾ HOẠCH NHẬP:</b> Đã chạm ngưỡng ROP. Bổ sung <b>{sku_data['De_Xuat_Mua']:,.0f}</b> đơn vị trước ngày <b>{sku_data['Ngay_Dat_Hang_Du_Kien']}</b>.</div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='smart-card-warning'><b style='color:#b45309;'>⚠️ KẾ HOẠCH NHẬP:</b> Đã chạm ngưỡng ROP. Bổ sung <b>{sku_data['De_Xuat_Mua']:,.0f} {sku_data['DVT']}</b> trước ngày <b>{sku_data['Ngay_Dat_Hang_Du_Kien']}</b>.</div>", unsafe_allow_html=True)
             else: 
                 st.markdown(f"<div class='smart-card-success'><b style='color:#15803d;'>🟢 AN TOÀN:</b> Chưa cần nhập thêm. Dự kiến đến <b>{sku_data['Ngay_Dat_Hang_Du_Kien']}</b> mới cần lên đơn.</div>", unsafe_allow_html=True)
                 
