@@ -319,6 +319,11 @@ try:
     total_daily_sales = df['Daily_Sales'].sum()
     avg_s2s_global = df['Ton_Kho_SL'].sum() / ((total_daily_sales * 30) + 0.0001) if total_daily_sales > 0 else 0
 
+    # --- GIẢI QUYẾT TRÙNG LẶP: Tính toán lượng khách hàng active duy nhất theo bộ lọc đang chạy ---
+    active_skus = df['SKU'].unique()
+    filtered_customers = customer_mapping[customer_mapping['SKU'].isin(active_skus)]
+    total_active_customers_clean = filtered_customers['Khach_Hang'].nunique()
+
     # --- HERO SECTION TỔNG QUAN ---
     st.markdown("<h2 style='font-weight: 900; margin-bottom: 5px; color: #0f172a;'>HỆ THỐNG QUẢN TRỊ KHO & GIÁM SÁT CUNG ỨNG</h2>", unsafe_allow_html=True)
     
@@ -326,7 +331,7 @@ try:
     m1.metric("TỔNG VỐN TỒN KHO", f"{df['Ton_Kho_Value'].sum():,.0f} ₫")
     m2.metric("SỐ LƯỢNG SKU", f"{len(df):,}")
     m3.metric("S2S BÌNH QUÂN", f"{avg_s2s_global:.1f} Tháng")
-    m4.metric("KHÁCH HÀNG CÓ GIAO DỊCH", f"{int(df['Khach_Hang_Active'].sum()):,}")
+    m4.metric("KHÁCH HÀNG CÓ GIAO DỊCH", f"{int(total_active_customers_clean):,}")
 
     st.markdown("<br>", unsafe_allow_html=True)
     
