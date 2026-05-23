@@ -13,8 +13,14 @@ st.markdown("""
     <style>
     /* Nhúng font Montserrat đồng bộ toàn diện hệ thống */
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap');
-    html, body, [class*="css"], [class*="st-"], .stApp { 
-        font-family: 'Montserrat', sans-serif !important; 
+    
+    /* CHỈ ÁP DỤNG FONT CHO CÁC THẺ VĂN BẢN (KHÔNG ĐÈ LÊN THƯ VIỆN ICON CỦA GLIDE TABLE) */
+    html, body, [data-testid="stAppViewContainer"] {
+        font-family: 'Montserrat', sans-serif !important;
+    }
+    
+    .stApp p, .stApp span, .stApp label, .stApp button, .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6, .stApp td, .stApp th {
+        font-family: 'Montserrat', sans-serif !important;
     }
 
     /* -----------------------------------
@@ -200,12 +206,12 @@ st.markdown("""
         opacity: 1;
     }
 
-    /* IN ĐẬM TOÀN BỘ TIÊU ĐỀ (HEADER) CỦA BẢNG DATAFRAME */
+    /* IN ĐẬM RÕ NÉT TOÀN BỘ TIÊU ĐỀ (HEADER) CỦA BẢNG DATAFRAME */
     [data-testid="stDataFrame"] th, 
     [data-testid="stDataFrame"] [role="columnheader"] p,
     [data-testid="stDataFrame"] [role="columnheader"] span,
     [data-testid="stDataFrame"] [role="columnheader"] {
-        font-weight: 800 !important;
+        font-weight: 900 !important;
         color: #0f172a !important;
     }
 
@@ -576,10 +582,11 @@ try:
             'Số Lượng Cần Mua', 'Trạng Thái', 'Cảnh Báo S2S'
         ]
         
-        # Chuyển đổi Khách Hàng Active sang kiểu chuỗi (String) nguyên bản để triệt tiêu hoàn toàn dấu phân cách hàng nghìn (Mục 2)
-        display_df['Khách Hàng Active'] = display_df['Khách Hàng Active'].astype(int).astype(str)
+        # Định nghĩa kiểu dữ liệu cột Khách Hàng Active là kiểu Số Nguyên thực tế (Mục 2)
+        display_df['Khách Hàng Active'] = display_df['Khách Hàng Active'].astype(int)
         
-        # SỬA LỖI GIỮA BỘ ĐỊNH DẠNG VÀ COLUMN_CONFIG (GIÚP KHẮC PHỤC HOÀN TOÀN LỖI CHỒNG CHÉO TOOLTIP KHI RÊ CHUỘT)
+        # SỬA LỖI HIỂN THỊ TOOLTIP HOÀN TOÀN BẰNG CẤU HÌNH COLUMN_CONFIG (Mục 1)
+        # Giữ đúng kiểu NumberColumn nhưng sử dụng format="%d" để không áp dụng phân tách hàng nghìn (Mục 2)
         st.dataframe(
             display_df, 
             use_container_width=True, 
@@ -589,7 +596,7 @@ try:
                 "Mã SKU": st.column_config.TextColumn("Mã SKU"),
                 "Hãng": st.column_config.TextColumn("Hãng"),
                 "Số Lượng Tồn Kho": st.column_config.NumberColumn("Số Lượng Tồn Kho", format="%d"),
-                "Khách Hàng Active": st.column_config.TextColumn("Khách Hàng Active"), # Đọc dạng chuỗi không thêm phân tách
+                "Khách Hàng Active": st.column_config.NumberColumn("Khách Hàng Active", format="%d"), 
                 "Dự Trù Trong Tháng": st.column_config.NumberColumn("Dự Trù Trong Tháng", format="%d"),
                 "Dự Trù 3 Tháng (Quý)": st.column_config.NumberColumn("Dự Trù 3 Tháng (Quý)", format="%d"),
                 "Ngày Đặt Hàng (ROP)": st.column_config.TextColumn("Ngày Đặt Hàng (ROP)"),
@@ -616,7 +623,7 @@ try:
                 default=po_df.columns.tolist()
             )
             
-            # Xuất PO bằng openpyxl an toàn tuyệt đối, định dạng chuẩn gửi nhà cung cấp
+            # Xuất PO bằng openpyxl (mặc định trong Streamlit), format chuẩn ready-to-use
             excel_data = to_excel(po_df[export_cols])
             
             st.download_button(
