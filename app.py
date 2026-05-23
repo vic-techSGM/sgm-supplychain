@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import datetime
+import io
 
 # ==========================================
 # 1. CẤU HÌNH GIAO DIỆN LIGHT MODE & FONT MONTSERRAT
@@ -199,6 +200,14 @@ st.markdown("""
         opacity: 1;
     }
 
+    /* BOLD HEADER CHO BẢNG THỐNG KÊ DATAFRAME */
+    [data-testid="stDataFrame"] th, 
+    [data-testid="stDataFrame"] [role="columnheader"] p,
+    [data-testid="stDataFrame"] [role="columnheader"] {
+        font-weight: 800 !important;
+        color: #0f172a !important;
+    }
+
     /* STICKY HERO SECTION TỰ ĐỘNG TRÊN NỀN SÁNG */
     div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stMetric"]) {
         position: sticky;
@@ -373,6 +382,61 @@ def load_data():
     df = pd.merge(df_th, active_kh, on='SKU', how='left').fillna(0)
     return df, customer_mapping, df_xb_clean
 
+# --- THUẬT TOÁN ĐỊNH DẠNG XUẤT FILE PO EXCEL CHUYÊN NGHIỆP ---
+def to_excel(df_to_export):
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df_to_export.to_excel(writer, index=False, sheet_name='SGM_PO_Export')
+        workbook  = writer.book
+        worksheet = writer.sheets['SGM_PO_Export']
+        
+        # Định nghĩa các Style định dạng
+        header_format = workbook.add_format({
+            'bold': True,
+            'text_wrap': True,
+            'valign': 'vcenter',
+            'align': 'center',
+            'fg_color': '#388e3c',
+            'font_color': '#FFFFFF',
+            'border': 1,
+            'font_name': 'Segoe UI',
+            'font_size': 11
+        })
+        
+        cell_format = workbook.add_format({
+            'font_name': 'Segoe UI',
+            'font_size': 10,
+            'border': 1,
+            'valign': 'vcenter'
+        })
+        
+        num_format = workbook.add_format({
+            'num_format': '#,##0',
+            'font_name': 'Segoe UI',
+            'font_size': 10,
+            'border': 1,
+            'valign': 'vcenter',
+            'align': 'right'
+        })
+
+        # Định dạng Header
+        worksheet.set_row(0, 28)
+        for col_num, value in enumerate(df_to_export.columns.values):
+            worksheet.write(0, col_num, value, header_format)
+            
+        # Định dạng chiều rộng và kiểu dữ liệu từng cột tự động
+        for i, col in enumerate(df_to_export.columns):
+            max_len = max(df_to_export[col].astype(str).map(len).max(), len(col)) + 4
+            col_width = min(max(max_len, 12), 40)
+            
+            # Cột số lượng/giá trị áp dụng định dạng phân tách hàng nghìn
+            if df_to_export[col].dtype in ['int64', 'float64'] and "Active" not in col:
+                worksheet.set_column(i, i, col_width, num_format)
+            else:
+                worksheet.set_column(i, i, col_width, cell_format)
+                
+    return output.getvalue()
+
 # ==========================================
 # 3. GIAO DIỆN CHÍNH & THUẬT TOÁN ĐIỀU PHỐI
 # ==========================================
@@ -512,13 +576,34 @@ try:
             'Số Lượng Cần Mua', 'Trạng Thái', 'Cảnh Báo S2S'
         ]
         
+        # Format dữ liệu số, loại bỏ hoàn toàn dấu phẩy ở hàng đơn vị của Khách Hàng Active để tránh hiểu nhầm
         styled_df = display_df.style.format({
             'Số Lượng Tồn Kho': "{:,.0f}",
+            'Khách Hàng Active': "{:.0f}",
             'Dự Trù Trong Tháng': "{:,.0f}",
             'Dự Trù 3 Tháng (Quý)': "{:,.0f}",
             'Số Lượng Cần Mua': "{:,.0f}"
         })
-        st.dataframe(styled_df, use_container_width=True, height=350)
+        
+        # Khai báo cấu hình cột tĩnh để sửa lỗi hiển thị Tooltip lộn xộn/chồng đè của Streamlit
+        st.dataframe(
+            styled_df, 
+            use_container_width=True, 
+            height=350,
+            hide_index=True,
+            column_config={
+                "Mã SKU": st.column_config.TextColumn("Mã SKU"),
+                "Hãng": st.column_config.TextColumn("Hãng"),
+                "Số Lượng Tồn Kho": st.column_config.NumberColumn("Số Lượng Tồn Kho"),
+                "Khách Hàng Active": st.column_config.NumberColumn("Khách Hàng Active", format="%d"),
+                "Dự Trù Trong Tháng": st.column_config.NumberColumn("Dự Trù Trong Tháng"),
+                "Dự Trù 3 Tháng (Quý)": st.column_config.NumberColumn("Dự Trù 3 Tháng (Quý)"),
+                "Ngày Đặt Hàng (ROP)": st.column_config.TextColumn("Ngày Đặt Hàng (ROP)"),
+                "Số Lượng Cần Mua": st.column_config.NumberColumn("Số Lượng Cần Mua"),
+                "Trạng Thái": st.column_config.TextColumn("Trạng Thái"),
+                "Cảnh Báo S2S": st.column_config.TextColumn("Cảnh Báo S2S")
+            }
+        )
         
         st.markdown("""
         <div class="smart-card-info">
@@ -536,11 +621,15 @@ try:
                 options=po_df.columns.tolist(), 
                 default=po_df.columns.tolist()
             )
+            
+            # Xuất PO dạng Excel .xlsx chuẩn hóa định dạng ready-to-use
+            excel_data = to_excel(po_df[export_cols])
+            
             st.download_button(
-                label="📥 TẢI XUỐNG FILE PO (CSV)", 
-                data=po_df[export_cols].to_csv(index=False).encode('utf-8-sig'), 
-                file_name=f'SGM_PO_{today.strftime("%Y%m%d")}.csv', 
-                mime='text/csv'
+                label="📥 TẢI XUỐNG FILE PO CHUẨN EXCEL (.XLSX)", 
+                data=excel_data, 
+                file_name=f'SGM_PO_{today.strftime("%Y%m%d")}.xlsx', 
+                mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             )
         else:
             st.success("Không có mặt hàng nào cần đặt mua trong danh mục lọc hiện tại.")
