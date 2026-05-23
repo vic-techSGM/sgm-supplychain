@@ -449,7 +449,7 @@ try:
         else:
             st.success("Không có mặt hàng nào cần đặt mua trong danh mục lọc hiện tại.")
 
-    # --- TAB 2: KHÁCH HÀNG THEO SKU (CHUYỂN LÊN VỊ TRÍ THỨ 2) ---
+    # --- TAB 2: KHÁCH HÀNG THEO SKU ---
     with tab2:
         st.markdown("<h3 style='font-weight: 800;'>🔍 Phân bổ Khách hàng theo SKU</h3>", unsafe_allow_html=True)
         
@@ -484,8 +484,11 @@ try:
                 def get_max_streak(dates_series):
                     if dates_series.empty:
                         return 0
-                    # Quy đổi năm-tháng thành mốc số nguyên đại diện để tính khoảng cách liên tục
-                    indices = sorted(list(set(d.year * 12 + d.month for d in dates_series if pd.notna(d))))
+                    valid_dates = [d for d in dates_series if pd.notna(d)]
+                    months_indices = []
+                    for d in valid_dates:
+                        months_indices.append(d.year * 12 + d.month)
+                    indices = sorted(list(set(months_indices)))
                     if not indices:
                         return 0
                     max_streak = 1
@@ -568,7 +571,7 @@ try:
         else:
             st.warning("Không có dữ liệu tồn kho hợp lệ để khởi tạo Bản đồ nhiệt.")
 
-    # --- TAB 3: RỦI RO HẠN DÙNG (CHUYỂN LÊN VỊ TRÍ THỨ 3) ---
+    # --- TAB 3: RỦI RO HẠN DÙNG ---
     with tab3:
         st.markdown("<h3 style='font-weight: 800;'>🚩 Cảnh báo Hàng Cận/Hết Hạn</h3>", unsafe_allow_html=True)
         risk_df = df[df['Het_HSD_Value'] > 0].copy()
@@ -600,17 +603,15 @@ try:
             display_risk_df = risk_df[['SKU', 'Hang', 'Ton_Kho_SL', 'Het_HSD_Value']].copy()
             display_risk_df.columns = ['Mã SKU', 'Hãng', 'Số Lượng Tồn Kho', 'Giá trị thất thoát']
             
-            st.dataframe(
-                display_risk_df.style.format({
-                    'Số Lượng Tồn Kho': "{:,.0f}", 
-                    'Giá trị thất thoát': "{:,.0f} ₫"
-                }), 
-                use_container_width=True
-            )
+            styled_risk = display_risk_df.style.format({
+                'Số Lượng Tồn Kho': "{:,.0f}", 
+                'Giá trị thất thoát': "{:,.0f} ₫"
+            })
+            st.dataframe(styled_risk, use_container_width=True)
         else: 
             st.markdown("<div class='smart-card-success'><b style='color:#15803d;'>✅ TRẠNG THÁI AN TOÀN:</b> Không ghi nhận rủi ro cận hạn.</div>", unsafe_allow_html=True)
 
-    # --- TAB 4: PHÂN LOẠI SKU THEO DOANH SỐ (CHUYỂN XUỐNG VỊ TRÍ THỨ 4) ---
+    # --- TAB 4: PHÂN LOẠI SKU THEO DOANH SỐ ---
     with tab4:
         st.markdown("<h3 style='font-weight: 800;'>🔥 Top 20 SKU Bán Chạy Nhất</h3>", unsafe_allow_html=True)
         
@@ -650,4 +651,55 @@ try:
             names='SKU', 
             hole=0.4, 
             color='SKU', 
-            color_discrete_seque
+            color_discrete_sequence=px.colors.qualitative.Pastel
+        )
+        fig_pie_sales.update_traces(textposition='inside', textinfo='percent')
+        fig_pie_sales.update_layout(
+            height=600, 
+            showlegend=False, 
+            paper_bgcolor='rgba(0,0,0,0)', 
+            plot_bgcolor='rgba(0,0,0,0)', 
+            margin=dict(t=30, b=30, l=10, r=10),
+            font=dict(family="Montserrat", color="#1e293b")
+        )
+        st.plotly_chart(fig_pie_sales, use_container_width=True)
+
+    # --- TAB 5: TRA CỨU CHI TIẾT SKU ---
+    with tab5:
+        st.markdown("<h3 style='font-weight: 800;'>🔍 Tra cứu chi tiết & Đề xuất AI</h3>", unsafe_allow_html=True)
+        selected_sku = st.selectbox("Chọn Mã SKU cần phân tích:", df['SKU'].unique())
+        
+        if selected_sku:
+            sku_data = df[df['SKU'] == selected_sku].iloc[0]
+            
+            c_desc1, c_desc2, c_desc3 = st.columns(3)
+            c_desc1.info(f"**📂 Ngành:** {sku_data['Nganh_Hang']}")
+            c_desc2.info(f"**🔬 Chủng loại:** {sku_data['Chung_Loai']}")
+            c_desc3.info(f"**🏭 Hãng:** {sku_data['Hang']}")
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            c1, c2, c3, c4 = st.columns(4)
+            c1.metric("Tồn thực tế", f"{sku_data['Ton_Kho_SL']:,.0f}")
+            c2.metric("Bán/ngày", f"{sku_data['Daily_Sales']:.2f}")
+            c3.metric("KH Active", int(sku_data['Khach_Hang_Active']))
+            c4.metric("S2S", f"{sku_data['S2S_Months']:.1f} T")
+            
+            st.markdown("<h4 style='font-weight: 800; margin-top: 30px; margin-bottom: 20px;'>💡 ĐỀ XUẤT ĐIỀU PHỐI</h4>", unsafe_allow_html=True)
+            
+            if sku_data['Trang_Thai'] == "🔴 ĐỨT HÀNG": 
+                st.markdown(f"<div class='smart-card-error'><b style='color:#b91c1c;'>🚨 BÁO ĐỘNG ĐỨT HÀNG:</b> Tồn hiện tại thấp hơn Lead Time. Mua ngay <b>{sku_data['De_Xuat_Mua']:,.0f}</b> đơn vị. Hạn cuối: <b>{sku_data['Ngay_Dat_Hang_Du_Kien']}</b>.</div>", unsafe_allow_html=True)
+            elif sku_data['Trang_Thai'] == "🟡 CẦN NHẬP": 
+                st.markdown(f"<div class='smart-card-warning'><b style='color:#b45309;'>⚠️ KẾ HOẠCH NHẬP:</b> Đã chạm ngưỡng ROP. Bổ sung <b>{sku_data['De_Xuat_Mua']:,.0f}</b> đơn vị trước ngày <b>{sku_data['Ngay_Dat_Hang_Du_Kien']}</b>.</div>", unsafe_allow_html=True)
+            else: 
+                st.markdown(f"<div class='smart-card-success'><b style='color:#15803d;'>🟢 AN TOÀN:</b> Chưa cần nhập thêm. Dự kiến đến <b>{sku_data['Ngay_Dat_Hang_Du_Kien']}</b> mới cần lên đơn.</div>", unsafe_allow_html=True)
+                
+            if sku_data['S2S_Months'] > 6: 
+                st.markdown(f"<div class='smart-card-error'><b style='color:#b91c1c;'>📦 ĐỌNG VỐN:</b> S2S đạt <b>{sku_data['S2S_Months']:.1f} tháng</b>. Rà soát Sale hoặc ngưng nhập.</div>", unsafe_allow_html=True)
+            elif sku_data['S2S_Months'] < 1 and sku_data['Daily_Sales'] > 0: 
+                st.markdown("<div class='smart-card-warning'><b style='color:#b45309;'>🔥 ÁP LỰC TIÊU THỤ LỚN:</b> Vòng quay kho dưới 1 tháng. Cần nâng DOI.</div>", unsafe_allow_html=True)
+                
+            if sku_data['Het_HSD_Value'] > 0: 
+                st.markdown(f"<div class='smart-card-error'><b style='color:#b91c1c;'>🚩 RỦI RO HSD:</b> Thiệt hại dự kiến <b>{sku_data['Het_HSD_Value']:,.0f} ₫</b>. Áp dụng FEFO ngay.</div>", unsafe_allow_html=True)
+
+except Exception as e:
+    st.error(f"Lỗi hệ thống nội bộ: {e}")
