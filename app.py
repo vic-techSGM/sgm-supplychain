@@ -103,7 +103,7 @@ st.markdown("""
         text-shadow: none !important;
     }
 
-    /* THẺ METRIC TÙY BIẾN CHO HOVER TOOLTIP */
+    /* THẺ METRIC TÙY BIẾN CHO HOVER TOOLTIP TRONG TAB 5 */
     .custom-metric-card {
         background: linear-gradient(145deg, #fffdfa, #fdf4e7) !important; 
         border-radius: 20px !important;
@@ -156,6 +156,45 @@ st.markdown("""
         border: 1px solid #475569;
     }
     .custom-metric-card:hover .tooltip-text {
+        visibility: visible;
+        opacity: 1;
+    }
+
+    /* THẺ METRIC ĐƠN HÀNG TRUNG BÌNH CÓ HOVER TOOLTIP TRONG TAB 2 */
+    .custom-metric-card-aov {
+        background: linear-gradient(145deg, #f8fafc, #f1f5f9) !important; 
+        border: 1px solid #cbd5e1 !important; 
+        border-left: 5px solid #f59e0b !important; 
+        padding: 20px; 
+        border-radius: 12px; 
+        min-height: 120px;
+        position: relative;
+        cursor: pointer;
+    }
+    .custom-metric-card-aov .tooltip-text-aov {
+        visibility: hidden;
+        width: 255px;
+        background-color: #1e293b;
+        color: #f8fafc;
+        text-align: left;
+        border-radius: 12px;
+        padding: 15px;
+        position: absolute;
+        z-index: 9999;
+        bottom: 110%;
+        left: 50%;
+        margin-left: -127px;
+        opacity: 0;
+        transition: opacity 0.2s, visibility 0.2s;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+        font-size: 12px;
+        font-weight: 500;
+        line-height: 1.5;
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid #475569;
+    }
+    .custom-metric-card-aov:hover .tooltip-text-aov {
         visibility: visible;
         opacity: 1;
     }
@@ -508,35 +547,43 @@ try:
 
     # --- TAB 2: KHÁCH HÀNG THEO SKU ---
     with tab2:
-        st.markdown("<h3 style='font-weight: 800;'>🔍 Phân bổ Khách hàng theo SKU</h3>", unsafe_allow_html=True)
-        
-        st.markdown("""
-        <div class="smart-card-info">
-            <b style="color:#1d4ed8;">✨ CÁCH ĐỌC BẢN ĐỒ NHIỆT:</b><br>
-            - <b>Diện tích khối:</b> Đại diện tỷ trọng Vốn Tồn Kho. Khối càng lớn, vốn đọng càng nhiều.<br>
-            - <b>Màu sắc:</b> <span style="color:#15803d; font-weight:800;">Xanh lá (Hợp lý)</span> | <span style="color:#b45309; font-weight:800;">Cam (Nguy cơ thiếu)</span> | <span style="color:#b91c1c; font-weight:800;">Đỏ tươi (Chậm luân chuyển)</span>.
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown("<h3 style='font-weight: 800;'>🔍 Phân tích Hành vi Khách hàng theo SKU</h3>", unsafe_allow_html=True)
 
         list_kh = sorted(customer_mapping['Khach_Hang'].unique().tolist())
-        selected_kh = st.multiselect("Gõ tên hoặc chọn để tìm kiếm Khách Hàng (có thể chọn nhiều):", list_kh)
+        selected_kh = st.multiselect("Gõ tên hoặc chọn để tìm kiếm Khách Hàng (có thể chọn nhiều để so sánh):", list_kh)
         
-        # --- THUẬT TOÁN HIỂN THỊ THÔNG TIN CHI TIẾT KHI CHỌN DUY NHẤT 1 KHÁCH HÀNG ---
-        if len(selected_kh) == 1:
+        # --- THUẬT TOÁN KHI KHÔNG CHỌN KHÁCH HÀNG NÀO ---
+        if not selected_kh:
+            st.info("Vui lòng gõ tên hoặc chọn ít nhất một Khách Hàng từ hộp tìm kiếm phía trên để hiển thị phân tích dữ liệu.")
+
+        # --- THUẬT TOÁN HIỂN THỊ CHI TIẾT KHI CHỌN DUY NHẤT 1 KHÁCH HÀNG ---
+        elif len(selected_kh) == 1:
             cust = selected_kh[0]
             cust_tx = df_xb_clean[df_xb_clean['Khach_Hang'] == cust].copy()
             
             if not cust_tx.empty:
-                # 1. Định dạng danh sách chuỗi lịch sử các tháng đặt hàng (mỗi tháng 1 dòng, không bold)
+                # 1. Định dạng lịch sử tháng đặt hàng (mỗi tháng 1 dòng, không bold)
                 cust_tx['Thang_Str'] = cust_tx['Date_Filter'].dt.strftime('%m/%Y')
                 ordered_months = cust_tx.sort_values('Date_Filter')['Thang_Str'].dropna().unique().tolist()
                 months_history_html = "<br>".join(ordered_months) if ordered_months else "Chưa có lịch sử"
                 
-                # 2. Tính giá trị đơn hàng bình quân
+                # 2. Tính giá trị đơn hàng bình quân và xây dựng Tooltip hiển thị doanh thu theo từng tháng
                 avg_order_val = cust_tx.groupby('Date_Filter')['Value'].sum().mean()
                 if pd.isna(avg_order_val):
                     avg_order_val = 0.0
                 
+                # Tính tổng chi tiêu theo tháng để hiển thị trên Tooltip của Card Đơn hàng trung bình
+                monthly_totals = cust_tx.groupby('Thang_Str')['Value'].sum().reset_index()
+                monthly_totals['Date_Sort'] = pd.to_datetime(monthly_totals['Thang_Str'], format='%m/%Y')
+                monthly_totals = monthly_totals.sort_values('Date_Sort')
+                
+                monthly_totals_html = ""
+                for _, row in monthly_totals.iterrows():
+                    monthly_totals_html += f"• Tháng {row['Thang_Str']}: {row['Value']:,.0f} ₫<br>"
+                
+                if not monthly_totals_html:
+                    monthly_totals_html = "Chưa ghi nhận dữ liệu doanh số"
+
                 # 3. Thuật toán đo lường chuỗi đặt hàng liên tục (Streak) không đứt quãng theo tháng cho Top 5 SKU
                 def get_max_streak(dates_series):
                     if dates_series.empty:
@@ -570,11 +617,9 @@ try:
                 
                 sku_stats = sku_stats.sort_values(by=['streak', 'total_qty'], ascending=[False, False])
                 top_5_skus = sku_stats.head(5)['SKU'].tolist()
-                
-                # Định dạng mỗi SKU một dòng, không bold
                 top_5_html = "<br>".join(top_5_skus) if top_5_skus else "Chưa ghi nhận"
 
-                # Hiển thị khối thẻ thông số (Customer Insight Dashboard) với kiểu chữ font-weight: 500 (không bold)
+                # Hiển thị khối 3 thẻ thông số (Customer Insight Cards)
                 col_c1, col_c2, col_c3 = st.columns(3)
                 with col_c1:
                     st.markdown(f"""
@@ -592,42 +637,86 @@ try:
                     """, unsafe_allow_html=True)
                 with col_c3:
                     st.markdown(f"""
-                    <div style="background: linear-gradient(145deg, #f8fafc, #f1f5f9); border: 1px solid #cbd5e1; border-left: 5px solid #f59e0b; padding: 20px; border-radius: 12px; min-height: 120px;">
+                    <div class="custom-metric-card-aov">
                         <span style="color: #475569; font-size: 11px; text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px;">💰 Giá trị đơn trung bình</span>
                         <p style="margin: 8px 0 0 0; color: #1e293b; font-size: 22px; font-weight: 900; line-height: 1.2;">{avg_order_val:,.0f} ₫</p>
+                        <div class="tooltip-text-aov">
+                            <strong style="color: #f59e0b; font-size: 13px;">Doanh số đặt hàng từng tháng:</strong><br><br>
+                            {monthly_totals_html}
+                        </div>
                     </div>
                     """, unsafe_allow_html=True)
                 st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
 
-        df_tab3 = df.copy()
-        if selected_kh:
-            skus_of_kh = customer_mapping[customer_mapping['Khach_Hang'].isin(selected_kh)]['SKU'].unique()
-            df_tab3 = df[df['SKU'].isin(skus_of_kh)]
+                # Hiển thị thẻ Đánh giá Khách hàng đơn lẻ
+                total_cust_spend = cust_tx['Value'].sum()
+                cust_skus_count = cust_tx['SKU'].nunique()
+                st.markdown(f"""
+                <div class="smart-card-success">
+                    <b style="color:#15803d; font-size:16px;">📊 ĐÁNH GIÁ KHÁCH HÀNG:</b><br>
+                    Khách hàng <b>{cust}</b> đã phát sinh giao dịch trên tổng cộng <b>{cust_skus_count} mã SKU</b> khác nhau, đóng góp doanh số lũy kế <b>{total_cust_spend:,.0f} ₫</b> cho hệ thống.
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # Hiển thị biểu đồ tròn % sản lượng từng SKU tiêu thụ của 1 khách hàng
+                st.markdown("<br>", unsafe_allow_html=True)
+                sku_shares = cust_tx.groupby('SKU')['Quantity'].sum().reset_index()
+                fig_pie_sku = px.pie(
+                    sku_shares, values='Quantity', names='SKU',
+                    title=f"Tỷ lệ % Tổng sản lượng đóng góp của từng SKU - Khách hàng {cust}",
+                    color_discrete_sequence=px.colors.qualitative.Pastel
+                )
+                fig_pie_sku.update_traces(textposition='inside', textinfo='percent+label')
+                fig_pie_sku.update_layout(
+                    paper_bgcolor='rgba(0,0,0,0)', 
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    margin=dict(t=50, b=20, l=10, r=10),
+                    font=dict(family="Montserrat", color="#1e293b")
+                )
+                st.plotly_chart(fig_pie_sku, use_container_width=True)
+
+        # --- THUẬT TOÁN SO SÁNH PHÂN TÍCH NHIỀU KHÁCH HÀNG (KHI CHỌN >= 2 KHÁCH HÀNG) ---
+        elif len(selected_kh) >= 2:
+            compare_tx = df_xb_clean[df_xb_clean['Khach_Hang'].isin(selected_kh)].copy()
             
-            st.markdown(f"""
-            <div class="smart-card-success">
-                <b style="color:#15803d;">📊 ĐÁNH GIÁ KHÁCH HÀNG:</b> Nhóm khách hàng này tiêu thụ <b>{len(df_tab3)} mã SKU</b>, tổng vốn lưu trữ là <b>{df_tab3['Ton_Kho_Value'].sum():,.0f} ₫</b>.
-            </div>
-            """, unsafe_allow_html=True)
-        
-        if not df_tab3.empty and df_tab3['Ton_Kho_Value'].sum() > 0:
-            fig_treemap = px.treemap(
-                df_tab3[df_tab3['Ton_Kho_Value'] > 0],
-                path=[px.Constant("CỤC DIỆN TỔN KHO"), 'Canh_Bao_S2S', 'Hang', 'SKU'],
-                values='Ton_Kho_Value', 
-                color='Canh_Bao_S2S',
-                color_discrete_map={"⚠️ Chậm luân chuyển": "#ef4444", "🔥 Rủi ro thiếu hàng": "#f59e0b", "✅ Hợp lý": "#10b981"}
-            )
-            fig_treemap.update_traces(root_color="#f1f5f9")
-            fig_treemap.update_layout(
-                paper_bgcolor='rgba(0,0,0,0)', 
-                plot_bgcolor='rgba(0,0,0,0)', 
-                margin=dict(t=30, l=10, r=10, b=10),
-                font=dict(family="Montserrat", color="#1e293b")
-            )
-            st.plotly_chart(fig_treemap, use_container_width=True)
-        else:
-            st.warning("Không có dữ liệu tồn kho hợp lệ để khởi tạo Bản đồ nhiệt.")
+            if not compare_tx.empty:
+                cust_revenue = compare_tx.groupby('Khach_Hang')['Value'].sum().reset_index()
+                cust_revenue = cust_revenue.sort_values(by='Value', ascending=False)
+                
+                # Thiết lập bảng xếp hạng đánh giá chi tiết
+                eval_lines = []
+                for idx, row in enumerate(cust_revenue.iterrows(), 1):
+                    eval_lines.append(f"Top {idx}: Khách hàng <b>{row[1]['Khach_Hang']}</b> đạt doanh số <b>{row[1]['Value']:,.0f} ₫</b>")
+                eval_text = "<br>".join(eval_lines)
+                
+                # Hiển thị thẻ Đánh giá Đa khách hàng
+                st.markdown(f"""
+                <div class="smart-card-success">
+                    <b style="color:#15803d; font-size:16px;">📊 BẢNG XẾP HẠNG DOANH THU KHÁCH HÀNG:</b><br><br>
+                    {eval_text}
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # Hiển thị biểu đồ cột so sánh tổng doanh thu của từng khách hàng
+                st.markdown("<br>", unsafe_allow_html=True)
+                fig_compare = px.bar(
+                    cust_revenue, 
+                    x='Khach_Hang', 
+                    y='Value', 
+                    color='Khach_Hang',
+                    text='Value',
+                    title="So sánh Tổng doanh thu lũy kế giữa các khách hàng được chọn",
+                    labels={'Value': 'Tổng doanh thu (VND)', 'Khach_Hang': 'Khách hàng'},
+                    color_discrete_sequence=px.colors.qualitative.Set2
+                )
+                fig_compare.update_traces(texttemplate='%{text:,.0f} ₫', textposition='outside')
+                fig_compare.update_layout(
+                    showlegend=False,
+                    paper_bgcolor='rgba(0,0,0,0)', 
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    font=dict(family="Montserrat", color="#1e293b")
+                )
+                st.plotly_chart(fig_compare, use_container_width=True)
 
     # --- TAB 3: RỦI RO HẠN DÙNG ---
     with tab3:
