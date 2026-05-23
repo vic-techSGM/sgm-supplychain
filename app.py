@@ -103,6 +103,63 @@ st.markdown("""
         text-shadow: none !important;
     }
 
+    /* THẺ METRIC TÙY BIẾN CHO HOVER TOOLTIP */
+    .custom-metric-card {
+        background: linear-gradient(145deg, #fffdfa, #fdf4e7) !important; 
+        border-radius: 20px !important;
+        padding: 25px !important;
+        box-shadow: 6px 12px 24px rgba(139,92,26,0.08), -2px -2px 10px rgba(255,255,255,0.8) !important;
+        border-left: 6px solid #fb923c !important; 
+        border-top: 1px solid rgba(251,146,60,0.1) !important;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+        position: relative;
+        cursor: pointer;
+    }
+    .custom-metric-card:hover { 
+        transform: translateY(-8px) scale(1.02); 
+        box-shadow: 10px 18px 30px rgba(139,92,26,0.12), -2px -2px 12px rgba(255,255,255,0.9) !important; 
+    }
+    .custom-metric-card .metric-label { 
+        color: #c2410c !important; 
+        font-size: 15px !important; 
+        text-transform: uppercase; 
+        font-weight: 800 !important; 
+        letter-spacing: 0.5px; 
+    }
+    .custom-metric-card .metric-value { 
+        color: #1e293b !important; 
+        font-size: 36px !important; 
+        font-weight: 900 !important; 
+        margin-top: 4px;
+    }
+    .custom-metric-card .tooltip-text {
+        visibility: hidden;
+        width: 280px;
+        background-color: #1e293b;
+        color: #f8fafc;
+        text-align: left;
+        border-radius: 12px;
+        padding: 15px;
+        position: absolute;
+        z-index: 9999;
+        bottom: 110%;
+        left: 50%;
+        margin-left: -140px;
+        opacity: 0;
+        transition: opacity 0.2s, visibility 0.2s;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+        font-size: 12px;
+        font-weight: 500;
+        line-height: 1.5;
+        max-height: 250px;
+        overflow-y: auto;
+        border: 1px solid #475569;
+    }
+    .custom-metric-card:hover .tooltip-text {
+        visibility: visible;
+        opacity: 1;
+    }
+
     /* STICKY HERO SECTION TỰ ĐỘNG TRÊN NỀN SÁNG */
     div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stMetric"]) {
         position: sticky;
@@ -470,12 +527,12 @@ try:
             cust_tx = df_xb_clean[df_xb_clean['Khach_Hang'] == cust].copy()
             
             if not cust_tx.empty:
-                # 1. Định dạng danh sách chuỗi lịch sử các tháng đặt hàng
+                # 1. Định dạng danh sách chuỗi lịch sử các tháng đặt hàng (mỗi tháng 1 dòng, không bold)
                 cust_tx['Thang_Str'] = cust_tx['Date_Filter'].dt.strftime('%m/%Y')
                 ordered_months = cust_tx.sort_values('Date_Filter')['Thang_Str'].dropna().unique().tolist()
-                months_history_str = ", ".join(ordered_months) if ordered_months else "Chưa có lịch sử"
+                months_history_html = "<br>".join(ordered_months) if ordered_months else "Chưa có lịch sử"
                 
-                # 2. Tính giá trị đơn hàng bình quân (gộp nhóm theo ngày hoặc tháng giao dịch)
+                # 2. Tính giá trị đơn hàng bình quân
                 avg_order_val = cust_tx.groupby('Date_Filter')['Value'].sum().mean()
                 if pd.isna(avg_order_val):
                     avg_order_val = 0.0
@@ -511,25 +568,26 @@ try:
                 ).reset_index()
                 sku_stats['streak'] = sku_stats['SKU'].map(sku_streaks).fillna(0)
                 
-                # Sắp xếp ưu tiên độ dài chuỗi liên tục trước, sau đó sắp xếp theo sản lượng tích lũy
                 sku_stats = sku_stats.sort_values(by=['streak', 'total_qty'], ascending=[False, False])
                 top_5_skus = sku_stats.head(5)['SKU'].tolist()
-                top_5_str = ", ".join(top_5_skus) if top_5_skus else "Chưa ghi nhận"
+                
+                # Định dạng mỗi SKU một dòng, không bold
+                top_5_html = "<br>".join(top_5_skus) if top_5_skus else "Chưa ghi nhận"
 
-                # Hiển thị khối thẻ thông số (Customer Insight Dashboard)
+                # Hiển thị khối thẻ thông số (Customer Insight Dashboard) với kiểu chữ font-weight: 500 (không bold)
                 col_c1, col_c2, col_c3 = st.columns(3)
                 with col_c1:
                     st.markdown(f"""
                     <div style="background: linear-gradient(145deg, #f8fafc, #f1f5f9); border: 1px solid #cbd5e1; border-left: 5px solid #3b82f6; padding: 20px; border-radius: 12px; min-height: 120px;">
                         <span style="color: #475569; font-size: 11px; text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px;">📅 Lịch sử tháng đặt hàng</span>
-                        <p style="margin: 8px 0 0 0; color: #1e293b; font-size: 14px; font-weight: 700; line-height: 1.4;">{months_history_str}</p>
+                        <p style="margin: 8px 0 0 0; color: #1e293b; font-size: 14px; font-weight: 500; line-height: 1.5;">{months_history_html}</p>
                     </div>
                     """, unsafe_allow_html=True)
                 with col_c2:
                     st.markdown(f"""
                     <div style="background: linear-gradient(145deg, #f8fafc, #f1f5f9); border: 1px solid #cbd5e1; border-left: 5px solid #10b981; padding: 20px; border-radius: 12px; min-height: 120px;">
                         <span style="color: #475569; font-size: 11px; text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px;">🔥 Top 5 SKU mua liên tục</span>
-                        <p style="margin: 8px 0 0 0; color: #1e293b; font-size: 14px; font-weight: 700; line-height: 1.4;">{top_5_str}</p>
+                        <p style="margin: 8px 0 0 0; color: #1e293b; font-size: 14px; font-weight: 500; line-height: 1.5;">{top_5_html}</p>
                     </div>
                     """, unsafe_allow_html=True)
                 with col_c3:
@@ -677,11 +735,35 @@ try:
             c_desc2.info(f"**🔬 Chủng loại:** {sku_data['Chung_Loai']}")
             c_desc3.info(f"**🏭 Hãng:** {sku_data['Hang']}")
             
+            # --- KIỂM TRA & TRUY VẤN DANH SÁCH KHÁCH HÀNG THỰC TẾ ĐANG MUA SKU NÀY ---
+            active_customers = df_xb_clean[df_xb_clean['SKU'] == selected_sku]['Khach_Hang'].dropna().unique().tolist()
+            active_customers = sorted([str(c).strip() for c in active_customers if str(c).strip() != ''])
+            active_customers_count = len(active_customers)
+            
+            # Tạo chuỗi danh sách định dạng HTML cho Tooltip hiển thị khi trỏ chuột vào
+            if active_customers:
+                cust_list_html = "".join([f"• {c}<br>" for c in active_customers])
+            else:
+                cust_list_html = "Chưa ghi nhận khách hàng"
+            
             st.markdown("<br>", unsafe_allow_html=True)
             c1, c2, c3, c4 = st.columns(4)
             c1.metric("Tồn thực tế", f"{sku_data['Ton_Kho_SL']:,.0f}")
             c2.metric("Bán/ngày", f"{sku_data['Daily_Sales']:.2f}")
-            c3.metric("KH Active", int(sku_data['Khach_Hang_Active']))
+            
+            # Thẻ KH Active có hỗ trợ Popup Tooltip khi rê chuột
+            with c3:
+                st.markdown(f"""
+                <div class="custom-metric-card">
+                    <div class="metric-label">KH ACTIVE</div>
+                    <div class="metric-value">{active_customers_count:,}</div>
+                    <div class="tooltip-text">
+                        <strong style="color: #fb923c; font-size: 13px;">Khách hàng đang mua ({active_customers_count}):</strong><br><br>
+                        {cust_list_html}
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+                
             c4.metric("S2S", f"{sku_data['S2S_Months']:.1f} T")
             
             st.markdown("<h4 style='font-weight: 800; margin-top: 30px; margin-bottom: 20px;'>💡 ĐỀ XUẤT ĐIỀU PHỐI</h4>", unsafe_allow_html=True)
