@@ -208,55 +208,80 @@ def load_data():
     df_xb_raw['SKU'] = df_xb_raw['SKU'].astype(str).str.strip()
     df_xb_raw[kh_col_name] = df_xb_raw[kh_col_name].astype(str).str.strip()
 
+    # Nhận diện cột thành tiền / doanh thu nếu có
+    val_cols = [c for c in df_xb_raw.columns if any(k in str(c).lower() for k in ['thành tiền', 'doanh thu', 'giá trị', 'tiền', 'val', 'amount', 'trị giá'])]
+    val_col_name = val_cols[0] if val_cols else None
+
+    # Nhận diện cột số lượng nếu có
+    qty_cols = [c for c in df_xb_raw.columns if any(k in str(c).lower() for k in ['số lượng', 'sl', 'qty', 'quantity'])]
+    qty_col_name = qty_cols[0] if qty_cols else None
+
     # --- TIẾN HÀNH LỌC THEO CỘT THÁNG (Từ 1/2026 đến Up to date) ---
     thang_cols = [c for c in df_xb_raw.columns if 'Tháng' in str(c)]
     if thang_cols:
         thang_col_name = thang_cols[0]
 
-        # Hàm chuẩn hóa nâng cao, tự động nhận diện kiểu dữ liệu gốc từ Excel
         def parse_thang_to_date(val):
             if pd.isna(val):
                 return pd.NaT
-            
-            # Nếu bản ghi đã là định dạng Datetime/Timestamp sẵn từ Excel
             if isinstance(val, (datetime.datetime, datetime.date, pd.Timestamp)):
                 return pd.to_datetime(val)
                 
             val_str = str(val).strip()
             try:
-                # Xử lý dạng MM/YYYY (Ví dụ: '01/2026' hoặc '1/2026')
                 if '/' in val_str:
                     parts = val_str.split('/')
                     if len(parts) == 2:
                         return pd.to_datetime(f"01/{val_str}", format="%d/%m/%Y")
-                # Xử lý dạng số YYYYMM (Ví dụ: '202601' hoặc số 202601)
                 if len(val_str) == 6 and val_str.isdigit():
                     return pd.to_datetime(val_str, format="%Y%m")
-                
                 return pd.to_datetime(val_str, errors='coerce')
             except:
                 return pd.NaT
 
         df_xb_raw['Date_Filter'] = df_xb_raw[thang_col_name].apply(parse_thang_to_date)
-        # Lọc bỏ các bản ghi trước ngày 01/01/2026
         df_xb_raw = df_xb_raw[df_xb_raw['Date_Filter'] >= pd.to_datetime('2026-01-01')]
     
-    customer_mapping = df_xb_raw[['SKU', kh_col_name]].dropna().copy()
-    customer_mapping.rename(columns={kh_col_name: 'Khach_Hang'}, inplace=True)
-    customer_mapping = customer_mapping[customer_mapping['Khach_Hang'] != 'nan']
+    # Thiết lập cấu trúc dữ liệu bán hàng đồng bộ
+    df_xb_clean = df_xb_raw.copy()
+    df_xb_clean.rename(columns={kh_col_name: 'Khach_Hang'}, inplace=True)
+    df_xb_clean = df_xb_clean[df_xb_clean['Khach_Hang'] != 'nan']
+
+    if val_col_name:
+        df_xb_clean['Value'] = pd.to_numeric(df_xb_clean[val_col_name], errors='coerce').fillna(0)
+    else:
+        df_xb_clean['Value'] = 0.0
+
+    if qty_col_name:
+        df_xb_clean['Quantity'] = pd.to_numeric(df_xb_clean[qty_col_name], errors='coerce').fillna(0)
+    else:
+        df_xb_clean['Quantity'] = 1.0
+
+    # Ước tính giá trị doanh thu bằng đơn giá tồn kho nếu cột giá trị gốc trống hoặc bằng không
+    if not val_col_name or df_xb_clean['Value'].sum() == 0:
+        df_th_temp = df_th.copy()
+        df_th_temp['Unit_Price'] = df_th_temp['Ton_Kho_Value'] / (df_th_temp['Ton_Kho_SL'] + 0.0001)
+        price_map = df_th_temp.set_index('SKU')['Unit_Price'].to_dict()
+        df_xb_clean['Value'] = df_xb_clean['SKU'].map(price_map).fillna(0) * df_xb_clean['Quantity']
+
+    # Đồng bộ hóa định dạng Date_Filter
+    df_xb_clean['Date_Filter'] = pd.to_datetime(df_xb_clean['Date_Filter'], errors='coerce')
+    df_xb_clean = df_xb_clean.dropna(subset=['SKU', 'Khach_Hang'])
+
+    customer_mapping = df_xb_clean[['SKU', 'Khach_Hang']].copy()
 
     # Số lượng khách hàng active theo từng SKU
-    active_kh = df_xb_raw.groupby('SKU')[kh_col_name].nunique().reset_index()
-    active_kh.rename(columns={kh_col_name: 'Khach_Hang_Active'}, inplace=True)
+    active_kh = df_xb_clean.groupby('SKU')['Khach_Hang'].nunique().reset_index()
+    active_kh.rename(columns={'Khach_Hang': 'Khach_Hang_Active'}, inplace=True)
     
     df = pd.merge(df_th, active_kh, on='SKU', how='left').fillna(0)
-    return df, customer_mapping
+    return df, customer_mapping, df_xb_clean
 
 # ==========================================
 # 3. GIAO DIỆN CHÍNH & THUẬT TOÁN ĐIỀU PHỐI
 # ==========================================
 try:
-    df_full, customer_mapping = load_data()
+    df_full, customer_mapping, df_xb_clean = load_data()
     today = datetime.date.today()
     
     # --- SIDEBAR MENU ---
@@ -335,7 +360,7 @@ try:
 
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # --- ĐIỀU HƯỚNG TABS (ĐÃ ĐỔI THỨ TỰ BÁN CHẠY XUỐNG VỊ TRÍ THỨ 4) ---
+    # --- ĐIỀU HƯỚNG TABS ---
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "📊 TỔNG QUAN & DỰ TRÙ", 
         "👥 KHÁCH HÀNG THEO SKU", 
@@ -439,6 +464,80 @@ try:
         list_kh = sorted(customer_mapping['Khach_Hang'].unique().tolist())
         selected_kh = st.multiselect("Gõ tên hoặc chọn để tìm kiếm Khách Hàng (có thể chọn nhiều):", list_kh)
         
+        # --- THUẬT TOÁN HIỂN THỊ THÔNG TIN CHI TIẾT KHI CHỌN DUY NHẤT 1 KHÁCH HÀNG ---
+        if len(selected_kh) == 1:
+            cust = selected_kh[0]
+            cust_tx = df_xb_clean[df_xb_clean['Khach_Hang'] == cust].copy()
+            
+            if not cust_tx.empty:
+                # 1. Định dạng danh sách chuỗi lịch sử các tháng đặt hàng
+                cust_tx['Thang_Str'] = cust_tx['Date_Filter'].dt.strftime('%m/%Y')
+                ordered_months = cust_tx.sort_values('Date_Filter')['Thang_Str'].dropna().unique().tolist()
+                months_history_str = ", ".join(ordered_months) if ordered_months else "Chưa có lịch sử"
+                
+                # 2. Tính giá trị đơn hàng bình quân (gộp nhóm theo ngày hoặc tháng giao dịch)
+                avg_order_val = cust_tx.groupby('Date_Filter')['Value'].sum().mean()
+                if pd.isna(avg_order_val):
+                    avg_order_val = 0.0
+                
+                # 3. Thuật toán đo lường chuỗi đặt hàng liên tục (Streak) không đứt quãng theo tháng cho Top 5 SKU
+                def get_max_streak(dates_series):
+                    if dates_series.empty:
+                        return 0
+                    # Quy đổi năm-tháng thành mốc số nguyên đại diện để tính khoảng cách liên tục
+                    indices = sorted(list(set(d.year * 12 + d.month for d in dates_series if pd.notna(d))))
+                    if not indices:
+                        return 0
+                    max_streak = 1
+                    current_streak = 1
+                    for i in range(1, len(indices)):
+                        if indices[i] == indices[i-1] + 1:
+                            current_streak += 1
+                        else:
+                            max_streak = max(max_streak, current_streak)
+                            current_streak = 1
+                    return max(max_streak, current_streak)
+
+                sku_streaks = {}
+                sku_months = cust_tx.groupby('SKU')['Date_Filter'].apply(list).to_dict()
+                for sku, dates in sku_months.items():
+                    sku_streaks[sku] = get_max_streak(pd.Series(dates))
+                
+                sku_stats = cust_tx.groupby('SKU').agg(
+                    total_qty=('Quantity', 'sum')
+                ).reset_index()
+                sku_stats['streak'] = sku_stats['SKU'].map(sku_streaks).fillna(0)
+                
+                # Sắp xếp ưu tiên độ dài chuỗi liên tục trước, sau đó sắp xếp theo sản lượng tích lũy
+                sku_stats = sku_stats.sort_values(by=['streak', 'total_qty'], ascending=[False, False])
+                top_5_skus = sku_stats.head(5)['SKU'].tolist()
+                top_5_str = ", ".join(top_5_skus) if top_5_skus else "Chưa ghi nhận"
+
+                # Hiển thị khối thẻ thông số (Customer Insight Dashboard)
+                col_c1, col_c2, col_c3 = st.columns(3)
+                with col_c1:
+                    st.markdown(f"""
+                    <div style="background: linear-gradient(145deg, #f8fafc, #f1f5f9); border: 1px solid #cbd5e1; border-left: 5px solid #3b82f6; padding: 20px; border-radius: 12px; min-height: 120px;">
+                        <span style="color: #475569; font-size: 11px; text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px;">📅 Lịch sử tháng đặt hàng</span>
+                        <p style="margin: 8px 0 0 0; color: #1e293b; font-size: 14px; font-weight: 700; line-height: 1.4;">{months_history_str}</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                with col_c2:
+                    st.markdown(f"""
+                    <div style="background: linear-gradient(145deg, #f8fafc, #f1f5f9); border: 1px solid #cbd5e1; border-left: 5px solid #10b981; padding: 20px; border-radius: 12px; min-height: 120px;">
+                        <span style="color: #475569; font-size: 11px; text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px;">🔥 Top 5 SKU mua liên tục</span>
+                        <p style="margin: 8px 0 0 0; color: #1e293b; font-size: 14px; font-weight: 700; line-height: 1.4;">{top_5_str}</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                with col_c3:
+                    st.markdown(f"""
+                    <div style="background: linear-gradient(145deg, #f8fafc, #f1f5f9); border: 1px solid #cbd5e1; border-left: 5px solid #f59e0b; padding: 20px; border-radius: 12px; min-height: 120px;">
+                        <span style="color: #475569; font-size: 11px; text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px;">💰 Giá trị đơn trung bình</span>
+                        <p style="margin: 8px 0 0 0; color: #1e293b; font-size: 22px; font-weight: 900; line-height: 1.2;">{avg_order_val:,.0f} ₫</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
+
         df_tab3 = df.copy()
         if selected_kh:
             skus_of_kh = customer_mapping[customer_mapping['Khach_Hang'].isin(selected_kh)]['SKU'].unique()
@@ -477,7 +576,6 @@ try:
         st.metric(label="🚨 GIÁ TRỊ THẤT THOÁT", value=f"{risk_df['Het_HSD_Value'].sum():,.0f} ₫")
         
         if not risk_df.empty:
-            # Sửa đổi chú thích trục cột Y & X thành tiếng Việt
             fig_risk = px.bar(
                 risk_df, 
                 x='SKU', 
@@ -499,7 +597,6 @@ try:
             )
             st.plotly_chart(fig_risk, use_container_width=True)
             
-            # Chuyển bảng thông tin chi tiết sang Tiếng Việt và đổi tên cột cuối thành Giá trị thất thoát
             display_risk_df = risk_df[['SKU', 'Hang', 'Ton_Kho_SL', 'Het_HSD_Value']].copy()
             display_risk_df.columns = ['Mã SKU', 'Hãng', 'Số Lượng Tồn Kho', 'Giá trị thất thoát']
             
@@ -553,55 +650,4 @@ try:
             names='SKU', 
             hole=0.4, 
             color='SKU', 
-            color_discrete_sequence=px.colors.qualitative.Pastel
-        )
-        fig_pie_sales.update_traces(textposition='inside', textinfo='percent')
-        fig_pie_sales.update_layout(
-            height=600, 
-            showlegend=False, 
-            paper_bgcolor='rgba(0,0,0,0)', 
-            plot_bgcolor='rgba(0,0,0,0)', 
-            margin=dict(t=30, b=30, l=10, r=10),
-            font=dict(family="Montserrat", color="#1e293b")
-        )
-        st.plotly_chart(fig_pie_sales, use_container_width=True)
-
-    # --- TAB 5: TRA CỨU CHI TIẾT SKU ---
-    with tab5:
-        st.markdown("<h3 style='font-weight: 800;'>🔍 Tra cứu chi tiết & Đề xuất AI</h3>", unsafe_allow_html=True)
-        selected_sku = st.selectbox("Chọn Mã SKU cần phân tích:", df['SKU'].unique())
-        
-        if selected_sku:
-            sku_data = df[df['SKU'] == selected_sku].iloc[0]
-            
-            c_desc1, c_desc2, c_desc3 = st.columns(3)
-            c_desc1.info(f"**📂 Ngành:** {sku_data['Nganh_Hang']}")
-            c_desc2.info(f"**🔬 Chủng loại:** {sku_data['Chung_Loai']}")
-            c_desc3.info(f"**🏭 Hãng:** {sku_data['Hang']}")
-            
-            st.markdown("<br>", unsafe_allow_html=True)
-            c1, c2, c3, c4 = st.columns(4)
-            c1.metric("Tồn thực tế", f"{sku_data['Ton_Kho_SL']:,.0f}")
-            c2.metric("Bán/ngày", f"{sku_data['Daily_Sales']:.2f}")
-            c3.metric("KH Active", int(sku_data['Khach_Hang_Active']))
-            c4.metric("S2S", f"{sku_data['S2S_Months']:.1f} T")
-            
-            st.markdown("<h4 style='font-weight: 800; margin-top: 30px; margin-bottom: 20px;'>💡 ĐỀ XUẤT ĐIỀU PHỐI</h4>", unsafe_allow_html=True)
-            
-            if sku_data['Trang_Thai'] == "🔴 ĐỨT HÀNG": 
-                st.markdown(f"<div class='smart-card-error'><b style='color:#b91c1c;'>🚨 BÁO ĐỘNG ĐỨT HÀNG:</b> Tồn hiện tại thấp hơn Lead Time. Mua ngay <b>{sku_data['De_Xuat_Mua']:,.0f}</b> đơn vị. Hạn cuối: <b>{sku_data['Ngay_Dat_Hang_Du_Kien']}</b>.</div>", unsafe_allow_html=True)
-            elif sku_data['Trang_Thai'] == "🟡 CẦN NHẬP": 
-                st.markdown(f"<div class='smart-card-warning'><b style='color:#b45309;'>⚠️ KẾ HOẠCH NHẬP:</b> Đã chạm ngưỡng ROP. Bổ sung <b>{sku_data['De_Xuat_Mua']:,.0f}</b> đơn vị trước ngày <b>{sku_data['Ngay_Dat_Hang_Du_Kien']}</b>.</div>", unsafe_allow_html=True)
-            else: 
-                st.markdown(f"<div class='smart-card-success'><b style='color:#15803d;'>🟢 AN TOÀN:</b> Chưa cần nhập thêm. Dự kiến đến <b>{sku_data['Ngay_Dat_Hang_Du_Kien']}</b> mới cần lên đơn.</div>", unsafe_allow_html=True)
-                
-            if sku_data['S2S_Months'] > 6: 
-                st.markdown(f"<div class='smart-card-error'><b style='color:#b91c1c;'>📦 ĐỌNG VỐN:</b> S2S đạt <b>{sku_data['S2S_Months']:.1f} tháng</b>. Rà soát Sale hoặc ngưng nhập.</div>", unsafe_allow_html=True)
-            elif sku_data['S2S_Months'] < 1 and sku_data['Daily_Sales'] > 0: 
-                st.markdown("<div class='smart-card-warning'><b style='color:#b45309;'>🔥 ÁP LỰC TIÊU THỤ LỚN:</b> Vòng quay kho dưới 1 tháng. Cần nâng DOI.</div>", unsafe_allow_html=True)
-                
-            if sku_data['Het_HSD_Value'] > 0: 
-                st.markdown(f"<div class='smart-card-error'><b style='color:#b91c1c;'>🚩 RỦI RO HSD:</b> Thiệt hại dự kiến <b>{sku_data['Het_HSD_Value']:,.0f} ₫</b>. Áp dụng FEFO ngay.</div>", unsafe_allow_html=True)
-
-except Exception as e:
-    st.error(f"Lỗi hệ thống nội bộ: {e}")
+            color_discrete_seque
