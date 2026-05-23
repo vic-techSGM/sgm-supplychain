@@ -157,7 +157,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 2. HỆ THỐNG XỬ LÝ DỮ LIỆU
+# 2. HỆ THỐNG XỬ LÝ DỮ LIỆU CHUẨN HÓA
 # ==========================================
 @st.cache_data(ttl=600)
 def load_data():
@@ -196,6 +196,7 @@ def load_data():
     for col in ['Xuat_Ban_SL', 'Ton_Kho_SL', 'Ton_Kho_Value', 'Het_HSD_Value']:
         if col in df_th.columns: df_th[col] = pd.to_numeric(df_th[col], errors='coerce').fillna(0)
 
+    # --- ĐỌC VÀ LỌC DỮ LIỆU SHEET XUẤT BÁN ---
     df_xb_raw = pd.read_excel(url, sheet_name='Xuất bán', header=1)
     cols = df_xb_raw.columns.tolist()
     cols[1] = 'SKU'
@@ -206,11 +207,45 @@ def load_data():
     
     df_xb_raw['SKU'] = df_xb_raw['SKU'].astype(str).str.strip()
     df_xb_raw[kh_col_name] = df_xb_raw[kh_col_name].astype(str).str.strip()
+
+    # --- TIẾN HÀNH LỌC THEO CỘT THÁNG (Từ 1/2026 đến Up to date) ---
+    thang_cols = [c for c in df_xb_raw.columns if 'Tháng' in str(c)]
+    if thang_cols:
+        thang_col_name = thang_cols[0]
+
+        # Hàm chuẩn hóa nâng cao, tự động nhận diện kiểu dữ liệu gốc từ Excel
+        def parse_thang_to_date(val):
+            if pd.isna(val):
+                return pd.NaT
+            
+            # Nếu bản ghi đã là định dạng Datetime/Timestamp sẵn từ Excel
+            if isinstance(val, (datetime.datetime, datetime.date, pd.Timestamp)):
+                return pd.to_datetime(val)
+                
+            val_str = str(val).strip()
+            try:
+                # Xử lý dạng MM/YYYY (Ví dụ: '01/2026' hoặc '1/2026')
+                if '/' in val_str:
+                    parts = val_str.split('/')
+                    if len(parts) == 2:
+                        return pd.to_datetime(f"01/{val_str}", format="%d/%m/%Y")
+                # Xử lý dạng số YYYYMM (Ví dụ: '202601' hoặc số 202601)
+                if len(val_str) == 6 and val_str.isdigit():
+                    return pd.to_datetime(val_str, format="%Y%m")
+                
+                return pd.to_datetime(val_str, errors='coerce')
+            except:
+                return pd.NaT
+
+        df_xb_raw['Date_Filter'] = df_xb_raw[thang_col_name].apply(parse_thang_to_date)
+        # Lọc bỏ các bản ghi trước ngày 01/01/2026
+        df_xb_raw = df_xb_raw[df_xb_raw['Date_Filter'] >= pd.to_datetime('2026-01-01')]
     
     customer_mapping = df_xb_raw[['SKU', kh_col_name]].dropna().copy()
     customer_mapping.rename(columns={kh_col_name: 'Khach_Hang'}, inplace=True)
     customer_mapping = customer_mapping[customer_mapping['Khach_Hang'] != 'nan']
-    
+
+    # Số lượng khách hàng active theo từng SKU
     active_kh = df_xb_raw.groupby('SKU')[kh_col_name].nunique().reset_index()
     active_kh.rename(columns={kh_col_name: 'Khach_Hang_Active'}, inplace=True)
     
