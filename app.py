@@ -289,7 +289,7 @@ def load_data():
     if hsd_col_idx is None and df_th_raw.shape[1] > 17:
         hsd_col_idx = 17
 
-    # 2. Tìm vị trí cột Đơn vị tính (ĐVT) tự động từ cấu trúc File (Mục 1)
+    # 2. Tìm vị trí cột Đơn vị tính (ĐVT) tự động từ cấu trúc File
     dvt_col_idx = None
     for idx, col in enumerate(df_th_raw.columns):
         if any(keyword in str(col).lower() for keyword in ['đvt', 'đơn vị tính', 'dvt', 'unit', 'đơn vị']):
@@ -560,7 +560,7 @@ try:
         "📊 TỔNG QUAN & DỰ TRÙ", 
         "👥 KHÁCH HÀNG THEO SKU", 
         "🚩 RỦI RO HẠN DÙNG",
-        "📈 PHÂN LOẠI SKU THEO DOANH SỐ", 
+        "📈 PHÂN LOẠI SKU THEO DOANH THU", 
         "💡 TRA CỨU CHI TIẾT SKU"
     ])
 
@@ -574,7 +574,12 @@ try:
                 title="Phân bổ vốn theo Ngành Hàng", 
                 color_discrete_sequence=px.colors.qualitative.Pastel
             )
-            fig_pie_nganh.update_traces(textposition='inside', textinfo='percent')
+            # Tối ưu hóa Tooltip Việt hóa cho biểu đồ ngành (Mục 2)
+            fig_pie_nganh.update_traces(
+                textposition='inside', 
+                textinfo='percent',
+                hovertemplate="<b>Ngành hàng:</b> %{label}<br><b>Giá trị tồn kho:</b> %{value:,.0f} ₫<br><b>Tỷ trọng:</b> %{percent}<extra></extra>"
+            )
             fig_pie_nganh.update_layout(
                 showlegend=True,
                 legend=dict(
@@ -598,7 +603,12 @@ try:
                 title="Tỷ trọng vốn theo Hãng", 
                 color_discrete_sequence=px.colors.qualitative.Set2
             )
-            fig_pie_hang.update_traces(textposition='inside', textinfo='percent')
+            # Tối ưu hóa Tooltip Việt hóa cho biểu đồ hãng (Mục 2)
+            fig_pie_hang.update_traces(
+                textposition='inside', 
+                textinfo='percent',
+                hovertemplate="<b>Hãng sản xuất:</b> %{label}<br><b>Giá trị tồn kho:</b> %{value:,.0f} ₫<br><b>Tỷ trọng:</b> %{percent}<extra></extra>"
+            )
             fig_pie_hang.update_layout(
                 showlegend=True,
                 legend=dict(
@@ -620,7 +630,7 @@ try:
 
         st.markdown("<h4 style='font-weight: 800; margin-top: 30px;'>🛒 Thống kê dự trù</h4>", unsafe_allow_html=True)
         
-        # Bổ sung trường dữ liệu ĐVT vào bảng Thống kê dự trù (Mục 2)
+        # Bổ sung trường dữ liệu ĐVT vào bảng Thống kê dự trù
         display_df = df[['SKU', 'Hang', 'DVT', 'Ton_Kho_SL', 'Khach_Hang_Active', 'Du_Tru_Thang', 'Du_Tru_Quy', 'Ngay_Dat_Hang_Du_Kien', 'De_Xuat_Mua', 'Trang_Thai', 'Canh_Bao_S2S']].copy()
         display_df.columns = [
             'Mã SKU', 'Hãng', 'ĐVT', 'Số Lượng Tồn Kho', 'Khách Hàng Active', 
@@ -628,11 +638,12 @@ try:
             'Số Lượng Cần Mua', 'Trạng Thái', 'Cảnh Báo S2S'
         ]
         
-        # Định nghĩa kiểu dữ liệu cột Khách Hàng Active là kiểu Số Nguyên thực tế (Mục 2)
+        # Định nghĩa kiểu dữ liệu cột Khách Hàng Active là kiểu Số Nguyên thực tế
         display_df['Khách Hàng Active'] = display_df['Khách Hàng Active'].astype(int)
         
-        # SỬA LỖI HIỂN THỊ TOOLTIP HOÀN TOÀN BẰNG CẤU HÌNH COLUMN_CONFIG (Mục 1)
-        # Bổ sung tooltip tiếng Việt chi tiết (Mục 1) cho từng header cột tương ứng, bao gồm ĐVT (Mục 2)
+        # SỬA LỖI HIỂN THỊ TOOLTIP HOÀN TOÀN BẰNG CẤU HÌNH COLUMN_CONFIG
+        # Giữ đúng kiểu NumberColumn nhưng sử dụng format="%d" để không áp dụng phân tách hàng nghìn
+        # Bổ sung tooltip tiếng Việt chi tiết cho từng header cột tương ứng, bao gồm ĐVT
         st.dataframe(
             display_df, 
             use_container_width=True, 
@@ -704,7 +715,7 @@ try:
                 ordered_months = cust_tx.sort_values('Date_Filter')['Thang_Str'].dropna().unique().tolist()
                 months_history_html = "<br>".join(ordered_months) if ordered_months else "Chưa có lịch sử"
                 
-                # 2. Tính giá trị đơn hàng bình quân và xây dựng Tooltip hiển thị doanh thu theo từng tháng
+                # 2. Tính giá trị đơn hàng bình quân và xây dựng Tooltip hiển thị doanh thu theo từng tháng (Mục 1 - Đổi Doanh số sang Doanh thu)
                 avg_order_val = cust_tx.groupby('Date_Filter')['Value'].sum().mean()
                 if pd.isna(avg_order_val):
                     avg_order_val = 0.0
@@ -719,7 +730,7 @@ try:
                     monthly_totals_html += f"• Tháng {row['Thang_Str']}: {row['Value']:,.0f} ₫<br>"
                 
                 if not monthly_totals_html:
-                    monthly_totals_html = "Chưa ghi nhận dữ liệu doanh số"
+                    monthly_totals_html = "Chưa ghi nhận dữ liệu doanh thu"
 
                 # 3. Thuật toán đo lường chuỗi đặt hàng liên tục (Streak) không đứt quãng theo tháng cho Top 5 SKU
                 def get_max_streak(dates_series):
@@ -778,24 +789,24 @@ try:
                         <span style="color: #475569; font-size: 11px; text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px;">💰 Giá trị đơn trung bình</span>
                         <p style="margin: 8px 0 0 0; color: #1e293b; font-size: 22px; font-weight: 900; line-height: 1.2;">{avg_order_val:,.0f} ₫</p>
                         <div class="tooltip-text-aov">
-                            <strong style="color: #f59e0b; font-size: 13px;">Doanh số đặt hàng từng tháng:</strong><br><br>
+                            <strong style="color: #f59e0b; font-size: 13px;">Doanh thu đặt hàng từng tháng:</strong><br><br>
                             {monthly_totals_html}
                         </div>
                     </div>
                     """, unsafe_allow_html=True)
                 st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
 
-                # Hiển thị thẻ Đánh giá Khách hàng đơn lẻ
+                # Hiển thị thẻ Đánh giá Khách hàng đơn lẻ (Mục 1 - Đổi định dạng văn bản sang "Khách hàng A đem lại doanh thu lũy kế...")
                 total_cust_spend = cust_tx['Value'].sum()
                 cust_skus_count = cust_tx['SKU'].nunique()
                 st.markdown(f"""
                 <div class="smart-card-success">
-                    <b style="color:#15803d; font-size:16px;">📊 ĐÁNH GIÁ KHÁCH HÀNG:</b><br>
-                    Khách hàng <b>{cust}</b> đã phát sinh giao dịch trên tổng cộng <b>{cust_skus_count} mã SKU</b> khác nhau, đóng góp doanh số lũy kế <b>{total_cust_spend:,.0f} ₫</b> cho hệ thống.
+                    <b style="color:#15803d; font-size:16px;">📊 ĐÁNH GIÁ KHÁCH HÀNG:</b><br><br>
+                    Khách hàng <b>{cust}</b> đem lại doanh thu lũy kế <b>{total_cust_spend:,.0f} ₫</b> trên tổng số <b>{cust_skus_count} mã SKU</b>.
                 </div>
                 """, unsafe_allow_html=True)
                 
-                # Hiển thị biểu đồ cột trực quan hoá sản lượng từng SKU tiêu thụ của 1 khách hàng (Mục 1)
+                # Hiển thị biểu đồ cột trực quan hoá sản lượng từng SKU tiêu thụ của 1 khách hàng
                 st.markdown("<br>", unsafe_allow_html=True)
                 sku_shares = cust_tx.groupby('SKU')['Quantity'].sum().reset_index()
                 sku_shares = sku_shares.sort_values(by='Quantity', ascending=False)
@@ -810,10 +821,12 @@ try:
                     labels={'Quantity': 'Sản lượng tiêu thụ', 'SKU': 'Mã SKU'},
                     color_discrete_sequence=px.colors.qualitative.Pastel
                 )
+                # Tối ưu hóa Tooltip Việt hóa cho biểu đồ cột sản lượng SKU (Mục 2)
                 fig_bar_sku.update_traces(
                     texttemplate='%{text:,.0f}', 
                     textposition='outside',
-                    marker=dict(cornerradius=6)
+                    marker=dict(cornerradius=6),
+                    hovertemplate="<b>Mã SKU:</b> %{x}<br><b>Sản lượng tiêu thụ:</b> %{y:,.0f} đơn vị<extra></extra>"
                 )
                 fig_bar_sku.update_layout(
                     showlegend=False,
@@ -824,7 +837,7 @@ try:
                 )
                 st.plotly_chart(fig_bar_sku, use_container_width=True)
                 
-                # Bổ sung hộp phân tích thông minh dựa trên Bar Chart sản lượng (Mục 2)
+                # Hộp phân tích thông minh dựa trên Bar Chart sản lượng
                 total_skus = len(sku_shares)
                 total_qty = sku_shares['Quantity'].sum()
                 top_sku_row = sku_shares.iloc[0]
@@ -837,7 +850,7 @@ try:
                     <b style="color:#1e3a8a; font-size:15px;">💡 PHÂN TÍCH TIÊU THỤ THÔNG MINH (UP-TO-DATE):</b><br><br>
                     • Khách hàng <b>{cust}</b> mua nhiều nhất mã SKU <b>{top_sku_id}</b> với sản lượng đạt <b>{top_sku_qty:,.0f} sản phẩm</b>, chiếm khoảng <b>{top_sku_pct:.1f}%</b> tổng sản lượng tiêu thụ của khách hàng này.<br>
                     • Cơ cấu giỏ hàng gồm <b>{total_skus} mã SKU</b> khác nhau, tổng lượng sản phẩm tiêu thụ đạt <b>{total_qty:,.0f} đơn vị</b>.<br>
-                    • Bình quan mỗi mã SKU khách hàng tiêu thụ khoảng <b>{total_qty/total_skus:.1f} sản phẩm</b>. Đề xuất ưu tiên chào bán thêm các chủng loại bổ trợ cho mã bán chạy nhất.
+                    • Bình quân mỗi mã SKU khách hàng tiêu thụ khoảng <b>{total_qty/total_skus:.1f} sản phẩm</b>. Đề xuất ưu tiên chào bán thêm các chủng loại bổ trợ cho mã bán chạy nhất.
                 </div>
                 """, unsafe_allow_html=True)
 
@@ -849,10 +862,10 @@ try:
                 cust_revenue = compare_tx.groupby('Khach_Hang')['Value'].sum().reset_index()
                 cust_revenue = cust_revenue.sort_values(by='Value', ascending=False)
                 
-                # Thiết lập bảng xếp hạng đánh giá chi tiết
+                # Thiết lập bảng xếp hạng đánh giá chi tiết (Mục 1 - Đổi Doanh số sang Doanh thu)
                 eval_lines = []
                 for idx, row in enumerate(cust_revenue.iterrows(), 1):
-                    eval_lines.append(f"Top {idx}: Khách hàng <b>{row[1]['Khach_Hang']}</b> đạt doanh số <b>{row[1]['Value']:,.0f} ₫</b>")
+                    eval_lines.append(f"Top {idx}: Khách hàng <b>{row[1]['Khach_Hang']}</b> đem lại doanh thu lũy kế <b>{row[1]['Value']:,.0f} ₫</b>")
                 eval_text = "<br>".join(eval_lines)
                 
                 # Hiển thị thẻ Đánh giá Đa khách hàng
@@ -875,7 +888,12 @@ try:
                     labels={'Value': 'Tổng doanh thu (VND)', 'Khach_Hang': 'Khách hàng'},
                     color_discrete_sequence=px.colors.qualitative.Set2
                 )
-                fig_compare.update_traces(texttemplate='%{text:,.0f} ₫', textposition='outside')
+                # Tối ưu hóa Tooltip Việt hóa cho biểu đồ cột doanh thu đa khách hàng (Mục 2)
+                fig_compare.update_traces(
+                    texttemplate='%{text:,.0f} ₫', 
+                    textposition='outside',
+                    hovertemplate="<b>Khách hàng:</b> %{x}<br><b>Tổng doanh thu lũy kế:</b> %{y:,.0f} ₫<extra></extra>"
+                )
                 fig_compare.update_layout(
                     showlegend=False,
                     paper_bgcolor='rgba(0,0,0,0)', 
@@ -905,7 +923,13 @@ try:
                     'Hang': 'Hãng sản xuất'
                 }
             )
-            fig_risk.update_traces(texttemplate='%{text:,.0f}', textposition='outside', marker=dict(cornerradius=6))
+            # Tối ưu hóa Tooltip Việt hóa cho biểu đồ rủi ro hạn dùng (Mục 2)
+            fig_risk.update_traces(
+                texttemplate='%{text:,.0f}', 
+                textposition='outside', 
+                marker=dict(cornerradius=6),
+                hovertemplate="<b>Mã SKU:</b> %{x}<br><b>Giá trị hết hạn:</b> %{y:,.0f} ₫<extra></extra>"
+            )
             fig_risk.update_layout(
                 paper_bgcolor='rgba(0,0,0,0)', 
                 plot_bgcolor='rgba(0,0,0,0)',
@@ -913,7 +937,7 @@ try:
             )
             st.plotly_chart(fig_risk, use_container_width=True)
             
-            # Bổ sung ĐVT vào bảng thống kê rủi ro hạn dùng (Mục 3)
+            # Bổ sung ĐVT vào bảng thống kê rủi ro hạn dùng
             display_risk_df = risk_df[['SKU', 'Hang', 'DVT', 'Ton_Kho_SL', 'Het_HSD_Value']].copy()
             display_risk_df.columns = ['Mã SKU', 'Hãng', 'ĐVT', 'Số Lượng Tồn Kho', 'Giá trị thất thoát']
             
@@ -925,9 +949,9 @@ try:
         else: 
             st.markdown("<div class='smart-card-success'><b style='color:#15803d;'>✅ TRẠNG THÁI AN TOÀN:</b> Không ghi nhận rủi ro cận hạn.</div>", unsafe_allow_html=True)
 
-    # --- TAB 4: PHÂN LOẠI SKU THEO DOANH SỐ ---
+    # --- TAB 4: PHÂN LOẠI SKU THEO DOANH THU (Mục 1 - Đổi Doanh số sang Doanh thu) ---
     with tab4:
-        st.markdown("<h3 style='font-weight: 800;'>🔥 Top 20 SKU Bán Chạy Nhất</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='font-weight: 800;'>🔥 Top 20 SKU Mang Lại Doanh Thu Cao Nhất</h3>", unsafe_allow_html=True)
         
         top_sku = df.sort_values(by='Xuat_Ban_SL', ascending=False).head(20).sort_values(by='Xuat_Ban_SL', ascending=True)
         
@@ -942,11 +966,13 @@ try:
             text='Xuat_Ban_SL',
             labels={'Xuat_Ban_SL': 'Sản lượng', 'SKU': 'Mã SKU'}
         )
+        # Tối ưu hóa Tooltip Việt hóa cho biểu đồ cột ngang sản lượng top 20 (Mục 2)
         fig_bar.update_traces(
             texttemplate='%{text:,.0f}', 
             textposition='outside', 
             marker_line_width=0, 
-            marker=dict(cornerradius=8)
+            marker=dict(cornerradius=8),
+            hovertemplate="<b>Mã SKU:</b> %{y}<br><b>Sản lượng bán:</b> %{x:,.0f} đơn vị<extra></extra>"
         )
         fig_bar.update_layout(
             showlegend=False, 
@@ -958,7 +984,7 @@ try:
         )
         st.plotly_chart(fig_bar, use_container_width=True)
             
-        st.markdown("<h4 style='font-weight: 700; margin-top: 30px;'>2. Tỷ trọng Top 20 SKU</h4>", unsafe_allow_html=True)
+        st.markdown("<h4 style='font-weight: 700; margin-top: 30px;'>2. Tỷ trọng Sản lượng xuất bán Top 20 SKU</h4>", unsafe_allow_html=True)
         fig_pie_sales = px.pie(
             top_sku, 
             values='Xuat_Ban_SL', 
@@ -967,7 +993,12 @@ try:
             color='SKU', 
             color_discrete_sequence=px.colors.qualitative.Pastel
         )
-        fig_pie_sales.update_traces(textposition='inside', textinfo='percent')
+        # Tối ưu hóa Tooltip Việt hóa cho biểu đồ tròn tỷ trọng bán top 20 (Mục 2)
+        fig_pie_sales.update_traces(
+            textposition='inside', 
+            textinfo='percent',
+            hovertemplate="<b>Mã SKU:</b> %{label}<br><b>Sản lượng bán:</b> %{value:,.0f} đơn vị<br><b>Tỷ trọng:</b> %{percent}<extra></extra>"
+        )
         fig_pie_sales.update_layout(
             height=600, 
             showlegend=False, 
@@ -1004,7 +1035,7 @@ try:
             
             st.markdown("<br>", unsafe_allow_html=True)
             c1, c2, c3, c4 = st.columns(4)
-            # Gán ĐVT chính xác vào metric hiển thị Tồn thực tế (Mục 4)
+            # Gán ĐVT chính xác vào metric hiển thị Tồn thực tế
             c1.metric("Tồn thực tế", f"{sku_data['Ton_Kho_SL']:,.0f} {sku_data['DVT']}")
             c2.metric("Bán/ngày", f"{sku_data['Daily_Sales']:.2f}")
             
@@ -1025,7 +1056,7 @@ try:
             
             st.markdown("<h4 style='font-weight: 800; margin-top: 30px; margin-bottom: 20px;'>💡 ĐỀ XUẤT ĐIỀU PHỐI</h4>", unsafe_allow_html=True)
             
-            # Bổ sung ĐVT vào nội dung đề xuất đặt mua tự động của AI (Mục 4)
+            # Bổ sung ĐVT vào nội dung đề xuất đặt mua tự động của AI
             if sku_data['Trang_Thai'] == "🔴 ĐỨT HÀNG": 
                 st.markdown(f"<div class='smart-card-error'><b style='color:#b91c1c;'>🚨 BÁO ĐỘNG ĐỨT HÀNG:</b> Tồn hiện tại thấp hơn Lead Time. Mua ngay <b>{sku_data['De_Xuat_Mua']:,.0f} {sku_data['DVT']}</b>. Hạn cuối: <b>{sku_data['Ngay_Dat_Hang_Du_Kien']}</b>.</div>", unsafe_allow_html=True)
             elif sku_data['Trang_Thai'] == "🟡 CẦN NHẬP": 
