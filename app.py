@@ -28,8 +28,9 @@ st.markdown("""
         font-family: 'Montserrat', sans-serif !important;
     }
 
-    /* ĐẢM BẢO TUYỆT ĐỐI KHÔNG GHI ĐÈ ICON THU NHỎ SIDEBAR VÀ HEADER TRÊN MOBILE (Mục 1) */
-    button[data-testid="stSidebarCollapseButton"] *, 
+    /* ĐẢM BẢO TUYỆT ĐỐI KHÔNG GHI ĐÈ ICON THU NHỎ/MỞ RỘNG SIDEBAR VÀ HEADER TRÊN MOBILE */
+    button[data-testid*="CollapseButton"] *,
+    button[class*="CollapseButton"] *,
     button[data-testid="baseButton-header"] *,
     [data-testid="stHeader"] *,
     [class*="Icon"] *,
