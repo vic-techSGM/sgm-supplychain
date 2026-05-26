@@ -291,7 +291,7 @@ st.markdown("""
     .smart-card-error { background: #fef2f2 !important; border-left: 5px solid #ef4444 !important; padding: 22px; border-radius: 12px; color: #7f1d1d !important; margin-bottom: 18px; box-shadow: 0 4px 12px rgba(239,68,68,0.08); border-top: 1px solid rgba(239,68,68,0.1); }
     .smart-card-warning { background: #fffbeb !important; border-left: 5px solid #f59e0b !important; padding: 22px; border-radius: 12px; color: #78350f !important; margin-bottom: 18px; box-shadow: 0 4px 12px rgba(245,158,11,0.08); border-top: 1px solid rgba(245,158,11,0.1); }
 
-    /* THẺ HERO CARD TÙY BIẾN CHO S2S BÌNH QUÂN CÓ HOVER TOOLTIP (LUÔN BAY LÊN TRÊN CARD) */
+    /* THẺ HERO CARD TÙY BIẾN CHO S2S BÌNH QUÂN CÓ HOVER TOOLTIP (LUÔN BAY LÊN TRÊN CARD - Mục 1) */
     .custom-hero-card {
         background: linear-gradient(145deg, #fffdfa, #fdf4e7) !important; 
         border-radius: 16px !important;
@@ -347,6 +347,35 @@ st.markdown("""
     }
     </style>
 """, unsafe_allow_html=True)
+
+# --- BỘ GIẢI MÃ SỐ CHUẨN TIẾNG VIỆT ĐỒNG BỘ DỮ LIỆU EXCEL (Mục 1) ---
+def clean_vietnamese_number(val):
+    if pd.isna(val):
+        return 0.0
+    if isinstance(val, (int, float)):
+        return float(val)
+    s = str(val).strip().replace('\xa0', '').replace(' ', '')
+    if not s:
+        return 0.0
+    
+    # Chuẩn hóa tiền tệ và ký hiệu đặc biệt
+    s = s.replace('₫', '').replace('đ', '').replace('VND', '').replace('vnd', '').strip()
+    
+    # Định dạng "380.952.000,50" -> chuyển dấu chấm thành rỗng, dấu phẩy thành dấu chấm thập phân
+    if ',' in s and '.' in s:
+        s = s.replace('.', '').replace(',', '.')
+    elif ',' in s:
+        s = s.replace(',', '.')
+    elif '.' in s:
+        parts = s.split('.')
+        # Nếu có nhiều hơn 1 dấu chấm hoặc phần cuối cùng có độ dài đúng bằng 3 chữ số -> Dấu chấm là phân tách hàng nghìn
+        if len(parts) > 2 or (len(parts) == 2 and len(parts[1]) == 3):
+            s = "".join(parts)
+            
+    try:
+        return float(s)
+    except:
+        return 0.0
 
 # ==========================================
 # 2. HỆ THỐNG XỬ LÝ DỮ LIỆU CHUẨN HÓA
@@ -455,9 +484,9 @@ def load_data():
     # Loại bỏ các dòng ghi chú tổng hợp trống
     df_xb_clean = df_xb_clean[df_xb_clean['Khach_Hang'].str.lower() != 'nan']
     
-    # Convert số liệu chuẩn tránh lỗi trộn chữ của excel
-    df_xb_clean['Value'] = pd.to_numeric(df_xb_clean['Value'], errors='coerce').fillna(0)
-    df_xb_clean['Quantity'] = pd.to_numeric(df_xb_clean['Quantity'], errors='coerce').fillna(0)
+    # Giải quyết triệt để lỗi chuyển đổi chuỗi số từ Excel tiếng Việt (Mục 1)
+    df_xb_clean['Value'] = df_xb_clean['Value'].apply(clean_vietnamese_number)
+    df_xb_clean['Quantity'] = df_xb_clean['Quantity'].apply(clean_vietnamese_number)
 
     # --- TIẾN HÀNH LỌC THEO CỘT THÁNG (Từ 1/2026 đến Up to date) ---
     thang_cols = [c for c in df_xb_raw.columns if 'Tháng' in str(c)]
@@ -808,7 +837,7 @@ try:
         
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # 3. Thuật toán tính toán nhóm 10 khách hàng có doanh thu thấp nhất (Mục 2)
+        # 3. Thuật toán tính toán nhóm 10 khách hàng có doanh thu thấp nhất
         all_cust_rev = df_xb_clean.groupby('Khach_Hang')['Value'].sum().reset_index()
         
         # Chỉ lọc xét các khách hàng thực tế có phát sinh doanh thu lớn hơn 0
@@ -849,7 +878,7 @@ try:
         if not selected_kh:
             st.info("Vui lòng gõ tên hoặc chọn ít nhất một Khách Hàng từ hộp tìm kiếm phía trên để hiển thị phân tích dữ liệu.")
 
-        # --- THUẬT TOÁN HIỂN THỊ CHI TIẾT KHI CHỌN DUY NHẤT 1 KHÁCH HÀNG ---
+        # --- THUẬT TOÁN HIỂN THỊ CHI TIẾT KHI CHỌN DUY NHẤT 1 KHÁCH HÀNG (Mục 1, 2 & 3) ---
         elif len(selected_kh) == 1:
             cust = selected_kh[0]
             cust_tx = df_xb_clean[df_xb_clean['Khach_Hang'] == cust].copy()
@@ -865,7 +894,7 @@ try:
                 if pd.isna(avg_order_val):
                     avg_order_val = 0.0
                 
-                # Tính tổng chi tiêu theo tháng để hiển thị trên Tooltip của Card Đơn hàng trung bình
+                # Tính tổng chi tiêu theo tháng để hiển thị trên Tooltip của Card Đơn hàng trung bình (Sửa lỗi tính toán sai - Mục 1 & 3)
                 monthly_totals = cust_tx.groupby('Thang_Str')['Value'].sum().reset_index()
                 monthly_totals['Date_Sort'] = pd.to_datetime(monthly_totals['Thang_Str'], format='%m/%Y')
                 monthly_totals = monthly_totals.sort_values('Date_Sort')
@@ -876,6 +905,11 @@ try:
                 
                 if not monthly_totals_html:
                     monthly_totals_html = "Chưa ghi nhận dữ liệu doanh thu"
+
+                # Ánh xạ lấy tên sản phẩm mô tả (Hãng) và ĐVT tương ứng từ bảng Tổng hợp
+                sku_name_map = df.set_index('SKU')['Hang'].to_dict()
+                sku_dvt_map = df.set_index('SKU')['DVT'].to_dict()
+                cust_tx['Product_Name'] = cust_tx['SKU'].map(sku_name_map).fillna(cust_tx['SKU'])
 
                 # 3. Thuật toán đo lường chuỗi đặt hàng liên tục (Streak) không đứt quãng theo tháng cho Top 5 SKU
                 def get_max_streak(dates_series):
@@ -941,13 +975,36 @@ try:
                     """, unsafe_allow_html=True)
                 st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
 
-                # Hiển thị thẻ Đánh giá Khách hàng đơn lẻ
+                # --- PHẦN HIỂN THỊ KẾT QUẢ GIAO DỊCH CHI TIẾT THEO BỐ CỤC KHÁCH HÀNG (Mục 2) ---
                 total_cust_spend = cust_tx['Value'].sum()
                 cust_skus_count = cust_tx['SKU'].nunique()
+                
+                # Tìm giao dịch lớn nhất của khách hàng này
+                largest_idx = cust_tx['Value'].idxmax()
+                largest_row = cust_tx.loc[largest_idx]
+                largest_val = largest_row['Value']
+                largest_product = largest_row['Product_Name']
+                largest_month = largest_row['Date_Filter'].strftime('%m/%Y')
+                
+                # Tìm các giao dịch tiêu biểu khác (Top 4 mốc giao dịch tiếp theo xếp hạng giảm dần)
+                other_txs = cust_tx.drop(index=largest_idx).sort_values(by='Value', ascending=False).head(4)
+                other_tx_lines = []
+                for _, row in other_txs.iterrows():
+                    p_name = row['Product_Name']
+                    val = row['Value']
+                    m_str = row['Date_Filter'].strftime('%m/%Y')
+                    dvt = sku_dvt_map.get(row['SKU'], row['DVT_Xuat'])
+                    other_tx_lines.append(f"{p_name} ({dvt}): <b>{val:,.0f} ₫</b> (Tháng {m_str})")
+                other_tx_html = "<br>".join(other_tx_lines) if other_tx_lines else "Không có giao dịch tiêu biểu khác"
+
+                # Gán hiển thị chính xác thẻ đánh giá (Mục 2)
                 st.markdown(f"""
                 <div class="smart-card-success">
                     <b style="color:#15803d; font-size:16px;">📊 ĐÁNH GIÁ KHÁCH HÀNG:</b><br><br>
-                    Khách hàng <b>{cust}</b> đem lại doanh thu lũy kế <b>{total_cust_spend:,.0f} ₫</b> trên tổng số <b>{cust_skus_count} mã SKU</b>.
+                    • Khách hàng <b>{cust}</b> đem lại doanh thu lũy kế <b>{total_cust_spend:,.0f} ₫</b> trên tổng số <b>{cust_skus_count} mã SKU</b>.<br><br>
+                    • <b>Giao dịch lớn nhất:</b> <b>{largest_val:,.0f} ₫</b> ({largest_product} vào tháng {largest_month}).<br>
+                    • <b>Các giao dịch tiêu biểu khác:</b><br>
+                    {other_tx_html}
                 </div>
                 """, unsafe_allow_html=True)
                 
