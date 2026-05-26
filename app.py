@@ -14,13 +14,27 @@ st.markdown("""
     /* Nhúng font Montserrat đồng bộ toàn diện hệ thống */
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap');
     
-    /* CHỈ ÁP DỤNG FONT CHO CÁC THẺ VĂN BẢN (KHÔNG ĐÈ LÊN THƯ VIỆN ICON CỦA GLIDE TABLE) */
-    html, body, [data-testid="stAppViewContainer"] {
+    /* CHỈ ÁP DỤNG FONT CHO CÁC THẺ VĂN BẢN (KHÔNG ĐÈ LÊN THƯ VIỆN ICON CỦA GLIDE TABLE VÀ SIDEBAR) */
+    html, body, [data-testid="stAppViewContainer"], [data-testid="stSidebar"] {
         font-family: 'Montserrat', sans-serif !important;
     }
     
-    .stApp p, .stApp span, .stApp label, .stApp button, .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6, .stApp td, .stApp th {
+    .stApp p, .stApp label, .stApp button, .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6, .stApp td, .stApp th {
         font-family: 'Montserrat', sans-serif !important;
+    }
+    
+    /* Loại trừ thẻ span thông thường để không phá vỡ icon ghim/ẩn cột của bảng */
+    .stApp p, .stApp label, .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6 {
+        font-family: 'Montserrat', sans-serif !important;
+    }
+
+    /* ĐẢM BẢO TUYỆT ĐỐI KHÔNG GHI ĐÈ ICON THU NHỎ SIDEBAR VÀ HEADER TRÊN MOBILE (Mục 1) */
+    button[data-testid="stSidebarCollapseButton"] *, 
+    button[data-testid="baseButton-header"] *,
+    [data-testid="stHeader"] *,
+    [class*="Icon"] *,
+    .material-icons {
+        font-family: inherit !important;
     }
 
     /* -----------------------------------
@@ -574,7 +588,7 @@ try:
                 title="Phân bổ vốn theo Ngành Hàng", 
                 color_discrete_sequence=px.colors.qualitative.Pastel
             )
-            # Tối ưu hóa Tooltip Việt hóa cho biểu đồ ngành (Mục 2)
+            # Tối ưu hóa Tooltip Việt hóa cho biểu đồ ngành
             fig_pie_nganh.update_traces(
                 textposition='inside', 
                 textinfo='percent',
@@ -584,15 +598,15 @@ try:
                 showlegend=True,
                 legend=dict(
                     orientation="h",
-                    yanchor="bottom",
-                    y=-0.35,
+                    yanchor="top",
+                    y=-0.1,
                     xanchor="center",
                     x=0.5,
-                    font=dict(size=10)
+                    font=dict(size=9)
                 ),
                 paper_bgcolor='rgba(0,0,0,0)', 
                 plot_bgcolor='rgba(0,0,0,0)',
-                margin=dict(t=40, b=120, l=10, r=10),
+                margin=dict(t=50, b=50, l=10, r=10),
                 font=dict(family="Montserrat", color="#1e293b")
             )
             st.plotly_chart(fig_pie_nganh, use_container_width=True)
@@ -603,7 +617,7 @@ try:
                 title="Tỷ trọng vốn theo Hãng", 
                 color_discrete_sequence=px.colors.qualitative.Set2
             )
-            # Tối ưu hóa Tooltip Việt hóa cho biểu đồ hãng (Mục 2)
+            # Tối ưu hóa Tooltip Việt hóa cho biểu đồ hãng, hỗ trợ Scale responsive (Mục 2)
             fig_pie_hang.update_traces(
                 textposition='inside', 
                 textinfo='percent',
@@ -613,15 +627,15 @@ try:
                 showlegend=True,
                 legend=dict(
                     orientation="h",
-                    yanchor="bottom",
-                    y=-0.35,
+                    yanchor="top",
+                    y=-0.1,  # Co lại khoảng cách chú thích để không đè biểu đồ trên Mobile (Mục 2)
                     xanchor="center",
                     x=0.5,
-                    font=dict(size=10)
+                    font=dict(size=9) # Scale nhỏ cỡ chữ chú thích trên di động (Mục 2)
                 ),
                 paper_bgcolor='rgba(0,0,0,0)', 
                 plot_bgcolor='rgba(0,0,0,0)',
-                margin=dict(t=40, b=120, l=10, r=10),
+                margin=dict(t=50, b=50, l=10, r=10), # Thu gọn margin đáy từ 120px thành 50px (Mục 2)
                 font=dict(family="Montserrat", color="#1e293b")
             )
             st.plotly_chart(fig_pie_hang, use_container_width=True)
@@ -715,7 +729,7 @@ try:
                 ordered_months = cust_tx.sort_values('Date_Filter')['Thang_Str'].dropna().unique().tolist()
                 months_history_html = "<br>".join(ordered_months) if ordered_months else "Chưa có lịch sử"
                 
-                # 2. Tính giá trị đơn hàng bình quân và xây dựng Tooltip hiển thị doanh thu theo từng tháng (Mục 1 - Đổi Doanh số sang Doanh thu)
+                # 2. Tính giá trị đơn hàng bình quân và xây dựng Tooltip hiển thị doanh thu theo từng tháng
                 avg_order_val = cust_tx.groupby('Date_Filter')['Value'].sum().mean()
                 if pd.isna(avg_order_val):
                     avg_order_val = 0.0
@@ -796,7 +810,7 @@ try:
                     """, unsafe_allow_html=True)
                 st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
 
-                # Hiển thị thẻ Đánh giá Khách hàng đơn lẻ (Mục 1 - Đổi định dạng văn bản sang "Khách hàng A đem lại doanh thu lũy kế...")
+                # Hiển thị thẻ Đánh giá Khách hàng đơn lẻ
                 total_cust_spend = cust_tx['Value'].sum()
                 cust_skus_count = cust_tx['SKU'].nunique()
                 st.markdown(f"""
@@ -821,7 +835,7 @@ try:
                     labels={'Quantity': 'Sản lượng tiêu thụ', 'SKU': 'Mã SKU'},
                     color_discrete_sequence=px.colors.qualitative.Pastel
                 )
-                # Tối ưu hóa Tooltip Việt hóa cho biểu đồ cột sản lượng SKU (Mục 2)
+                # Tối ưu hóa Tooltip Việt hóa cho biểu đồ cột sản lượng SKU
                 fig_bar_sku.update_traces(
                     texttemplate='%{text:,.0f}', 
                     textposition='outside',
@@ -850,7 +864,7 @@ try:
                     <b style="color:#1e3a8a; font-size:15px;">💡 PHÂN TÍCH TIÊU THỤ THÔNG MINH (UP-TO-DATE):</b><br><br>
                     • Khách hàng <b>{cust}</b> mua nhiều nhất mã SKU <b>{top_sku_id}</b> với sản lượng đạt <b>{top_sku_qty:,.0f} sản phẩm</b>, chiếm khoảng <b>{top_sku_pct:.1f}%</b> tổng sản lượng tiêu thụ của khách hàng này.<br>
                     • Cơ cấu giỏ hàng gồm <b>{total_skus} mã SKU</b> khác nhau, tổng lượng sản phẩm tiêu thụ đạt <b>{total_qty:,.0f} đơn vị</b>.<br>
-                    • Bình quân mỗi mã SKU khách hàng tiêu thụ khoảng <b>{total_qty/total_skus:.1f} sản phẩm</b>. Đề xuất ưu tiên chào bán thêm các chủng loại bổ trợ cho mã bán chạy nhất.
+                    • Bình quan mỗi mã SKU khách hàng tiêu thụ khoảng <b>{total_qty/total_skus:.1f} sản phẩm</b>. Đề xuất ưu tiên chào bán thêm các chủng loại bổ trợ cho mã bán chạy nhất.
                 </div>
                 """, unsafe_allow_html=True)
 
@@ -862,7 +876,7 @@ try:
                 cust_revenue = compare_tx.groupby('Khach_Hang')['Value'].sum().reset_index()
                 cust_revenue = cust_revenue.sort_values(by='Value', ascending=False)
                 
-                # Thiết lập bảng xếp hạng đánh giá chi tiết (Mục 1 - Đổi Doanh số sang Doanh thu)
+                # Thiết lập bảng xếp hạng đánh giá chi tiết
                 eval_lines = []
                 for idx, row in enumerate(cust_revenue.iterrows(), 1):
                     eval_lines.append(f"Top {idx}: Khách hàng <b>{row[1]['Khach_Hang']}</b> đem lại doanh thu lũy kế <b>{row[1]['Value']:,.0f} ₫</b>")
@@ -888,7 +902,7 @@ try:
                     labels={'Value': 'Tổng doanh thu (VND)', 'Khach_Hang': 'Khách hàng'},
                     color_discrete_sequence=px.colors.qualitative.Set2
                 )
-                # Tối ưu hóa Tooltip Việt hóa cho biểu đồ cột doanh thu đa khách hàng (Mục 2)
+                # Tối ưu hóa Tooltip Việt hóa cho biểu đồ cột doanh thu đa khách hàng
                 fig_compare.update_traces(
                     texttemplate='%{text:,.0f} ₫', 
                     textposition='outside',
@@ -923,7 +937,7 @@ try:
                     'Hang': 'Hãng sản xuất'
                 }
             )
-            # Tối ưu hóa Tooltip Việt hóa cho biểu đồ rủi ro hạn dùng (Mục 2)
+            # Tối ưu hóa Tooltip Việt hóa cho biểu đồ rủi ro hạn dùng
             fig_risk.update_traces(
                 texttemplate='%{text:,.0f}', 
                 textposition='outside', 
@@ -949,7 +963,7 @@ try:
         else: 
             st.markdown("<div class='smart-card-success'><b style='color:#15803d;'>✅ TRẠNG THÁI AN TOÀN:</b> Không ghi nhận rủi ro cận hạn.</div>", unsafe_allow_html=True)
 
-    # --- TAB 4: PHÂN LOẠI SKU THEO DOANH THU (Mục 1 - Đổi Doanh số sang Doanh thu) ---
+    # --- TAB 4: PHÂN LOẠI SKU THEO DOANH THU ---
     with tab4:
         st.markdown("<h3 style='font-weight: 800;'>🔥 Top 20 SKU Mang Lại Doanh Thu Cao Nhất</h3>", unsafe_allow_html=True)
         
@@ -966,7 +980,7 @@ try:
             text='Xuat_Ban_SL',
             labels={'Xuat_Ban_SL': 'Sản lượng', 'SKU': 'Mã SKU'}
         )
-        # Tối ưu hóa Tooltip Việt hóa cho biểu đồ cột ngang sản lượng top 20 (Mục 2)
+        # Tối ưu hóa Tooltip Việt hóa cho biểu đồ cột ngang sản lượng top 20
         fig_bar.update_traces(
             texttemplate='%{text:,.0f}', 
             textposition='outside', 
@@ -993,7 +1007,7 @@ try:
             color='SKU', 
             color_discrete_sequence=px.colors.qualitative.Pastel
         )
-        # Tối ưu hóa Tooltip Việt hóa cho biểu đồ tròn tỷ trọng bán top 20 (Mục 2)
+        # Tối ưu hóa Tooltip Việt hóa cho biểu đồ tròn tỷ trọng bán top 20
         fig_pie_sales.update_traces(
             textposition='inside', 
             textinfo='percent',
