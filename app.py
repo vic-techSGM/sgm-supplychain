@@ -14,28 +14,18 @@ st.markdown("""
     /* Nhúng font Montserrat đồng bộ toàn diện hệ thống */
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap');
     
-    /* CHỈ ÁP DỤNG FONT CHO CÁC THẺ VĂN BẢN (KHÔNG ĐÈ LÊN THƯ VIỆN ICON CỦA GLIDE TABLE VÀ SIDEBAR) */
-    html, body, [data-testid="stAppViewContainer"], [data-testid="stSidebar"] {
-        font-family: 'Montserrat', sans-serif !important;
+    /* CHỈ ÉP FONT CHO THẺ CONTAINER CHÍNH & VĂN BẢN (KHÔNG ÉP LÊN TOÀN BỘ BUTTON/SPAN) */
+    html, body, [data-testid="stAppViewContainer"] {
+        font-family: 'Montserrat', sans-serif;
     }
     
-    .stApp p, .stApp label, .stApp button, .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6, .stApp td, .stApp th {
+    .stApp p, .stApp label, .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6, .stApp td, .stApp th, .stApp li {
         font-family: 'Montserrat', sans-serif !important;
     }
     
     /* Loại trừ thẻ span thông thường để không phá vỡ icon ghim/ẩn cột của bảng */
     .stApp p, .stApp label, .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6 {
         font-family: 'Montserrat', sans-serif !important;
-    }
-
-    /* ĐẢM BẢO TUYỆT ĐỐI KHÔNG GHI ĐÈ ICON THU NHỎ/MỞ RỘNG SIDEBAR VÀ HEADER TRÊN MOBILE */
-    button[data-testid*="CollapseButton"] *,
-    button[class*="CollapseButton"] *,
-    button[data-testid="baseButton-header"] *,
-    [data-testid="stHeader"] *,
-    [class*="Icon"] *,
-    .material-icons {
-        font-family: inherit !important;
     }
 
     /* -----------------------------------
@@ -271,8 +261,17 @@ st.markdown("""
         border: 1px solid #e2e8f0; 
     }
     
-    .stDownloadButton button { background-color: #388e3c !important; color: white !important; border-radius: 10px !important; font-weight: 800 !important; border: none !important; width: 100%; box-shadow: 0 8px 15px rgba(56,142,60,0.2); transition: all 0.3s ease; }
-    .stDownloadButton button:hover { background-color: #2e7d32 !important; transform: translateY(-3px); box-shadow: 0 12px 20px rgba(56,142,60,0.4); }
+    .stDownloadButton button { 
+        font-family: 'Montserrat', sans-serif !important; 
+        background-color: #388e3c !important; 
+        color: white !important; 
+        border-radius: 10px !important; 
+        font-weight: 800 !important; 
+        border: none !important; 
+        width: 100%; 
+        box-shadow: 0 8px 15px rgba(56,142,60,0.2); 
+        transition: all 0.3s ease; 
+    }
     
     /* -----------------------------------
        4. SMART CARDS PHONG CÁCH LIGHT MODE
