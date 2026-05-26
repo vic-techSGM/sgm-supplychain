@@ -571,7 +571,7 @@ try:
     
     df_f1 = df_full[df_full['Nganh_Hang'].isin(selected_nganh)]
     list_chungloai = df_f1['Chung_Loai'].unique().tolist() if 'Chung_Loai' in df_f1.columns else []
-    selected_chungloai = st.sidebar.multiselect("Chủng loại", list_chungloai, default=selected_chungloai) if list_chungloai else []
+    selected_chungloai = st.sidebar.multiselect("Chủng loại", list_chungloai, default=list_chungloai) if list_chungloai else []
     
     df_f2 = df_f1[df_f1['Chung_Loai'].isin(selected_chungloai)] if selected_chungloai else df_f1
     list_hang = df_f2['Hang'].unique().tolist()
@@ -808,7 +808,7 @@ try:
         
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # 3. Thuật toán tính toán nhóm 10 khách hàng có doanh thu thấp nhất
+        # 3. Thuật toán tính toán nhóm 10 khách hàng có doanh thu thấp nhất (Mục 2)
         all_cust_rev = df_xb_clean.groupby('Khach_Hang')['Value'].sum().reset_index()
         
         # Chỉ lọc xét các khách hàng thực tế có phát sinh doanh thu lớn hơn 0
