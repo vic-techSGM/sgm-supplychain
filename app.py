@@ -1,4 +1,4 @@
-import streamlit st
+import streamlit as st
 import pandas as pd
 import plotly.express as px
 import datetime
@@ -291,7 +291,7 @@ st.markdown("""
     .smart-card-error { background: #fef2f2 !important; border-left: 5px solid #ef4444 !important; padding: 22px; border-radius: 12px; color: #7f1d1d !important; margin-bottom: 18px; box-shadow: 0 4px 12px rgba(239,68,68,0.08); border-top: 1px solid rgba(239,68,68,0.1); }
     .smart-card-warning { background: #fffbeb !important; border-left: 5px solid #f59e0b !important; padding: 22px; border-radius: 12px; color: #78350f !important; margin-bottom: 18px; box-shadow: 0 4px 12px rgba(245,158,11,0.08); border-top: 1px solid rgba(245,158,11,0.1); }
 
-    /* THẺ HERO CARD TÙY BIẾN CHO S2S BÌNH QUÂN CÓ HOVER TOOLTIP (LUÔN BAY LÊN TRÊN CARD - Mục 1) */
+    /* THẺ HERO CARD TÙY BIẾN CHO S2S BÌNH QUÂN CÓ HOVER TOOLTIP (LUÔN BAY LÊN TRÊN CARD) */
     .custom-hero-card {
         background: linear-gradient(145deg, #fffdfa, #fdf4e7) !important; 
         border-radius: 16px !important;
@@ -330,7 +330,7 @@ st.markdown("""
         padding: 15px;
         position: absolute;
         z-index: 99999 !important; /* Đẩy lớp hiển thị lên cao nhất để không bị đè */
-        bottom: 115%; /* Chuyển thành hiển thị bay lên trên Card (Mục 1) */
+        bottom: 115%; /* Chuyển thành hiển thị bay lên trên Card */
         left: 50%;
         margin-left: -150px;
         opacity: 0;
@@ -417,7 +417,6 @@ def load_data():
             df_th[col] = pd.to_numeric(df_th[col], errors='coerce').fillna(0)
 
     # --- ĐỌC VÀ LỌC DỮ LIỆU SHEET XUẤT BÁN ---
-    # Đọc tiêu đề dòng 2 (Header = 1) để lấy đúng cột của bảng biểu thực tế
     df_xb_raw = pd.read_excel(url, sheet_name='Xuất bán', header=1)
     
     # Chuẩn hóa cột Mã SKU (Cột B - Index 1)
@@ -441,7 +440,7 @@ def load_data():
     val_cols = [c for c in df_xb_raw.columns if 'Doanh thu' in str(c)]
     val_col_name = val_cols[0] if val_cols else df_xb_raw.columns[4]
     
-    # Tiến hành chuẩn hóa lọc và làm sạch dữ liệu xuất bán theo đúng cột gốc (Đúng yêu cầu)
+    # Tiến hành chuẩn hóa lọc và làm sạch dữ liệu xuất bán theo đúng cột gốc
     df_xb_clean = df_xb_raw.copy()
     df_xb_clean.rename(columns={
         kh_col_name: 'Khach_Hang',
@@ -495,6 +494,60 @@ def load_data():
     df = pd.merge(df_th, active_kh, on='SKU', how='left').fillna(0)
     return df, customer_mapping, df_xb_clean
 
+# --- THUẬT TOÁN ĐỊNH DẠNG FILE PO EXCEL BẰNG OPENPYXL (MẶC ĐỊNH SẴN CÓ) ---
+def to_excel(df_to_export):
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df_to_export.to_excel(writer, index=False, sheet_name='SGM_PO_Export')
+        workbook = writer.book
+        worksheet = writer.sheets['SGM_PO_Export']
+        
+        from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+        from openpyxl.utils import get_column_letter
+        
+        # Định dạng Style màu xanh thương hiệu SGM
+        header_fill = PatternFill(start_color="388E3C", end_color="388E3C", fill_type="solid")
+        header_font = Font(name="Segoe UI", size=11, bold=True, color="FFFFFF")
+        cell_font = Font(name="Segoe UI", size=10)
+        
+        thin_border = Border(
+            left=Side(style='thin', color='DDDDDD'),
+            right=Side(style='thin', color='DDDDDD'),
+            top=Side(style='thin', color='DDDDDD'),
+            bottom=Side(style='thin', color='DDDDDD')
+        )
+        
+        # Thiết kế Header
+        for col_idx in range(1, len(df_to_export.columns) + 1):
+            cell = worksheet.cell(row=1, column=col_idx)
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = Alignment(horizontal="center", vertical="center")
+            
+        # Thiết kế nội dung bảng dữ liệu
+        for row_idx in range(2, len(df_to_export) + 2):
+            for col_idx in range(1, len(df_to_export.columns) + 1):
+                cell = worksheet.cell(row=row_idx, column=col_idx)
+                cell.font = cell_font
+                cell.border = thin_border
+                
+                val = cell.value
+                if isinstance(val, (int, float)):
+                    cell.alignment = Alignment(horizontal="right")
+                    # Định dạng phân tách hàng nghìn cho số lượng và giá trị (Ngoại trừ Khách Hàng Active)
+                    if "Active" not in df_to_export.columns[col_idx-1]:
+                        cell.number_format = '#,##0'
+                else:
+                    cell.alignment = Alignment(horizontal="left")
+                    
+        # Tự động điều chỉnh độ rộng cột
+        for col in worksheet.columns:
+            max_len = max(len(str(cell.value or '')) for cell in col)
+            col_letter = get_column_letter(col[0].column)
+            worksheet.column_dimensions[col_letter].width = min(max(max_len + 3, 12), 40)
+            
+    return output.getvalue()
+
 # ==========================================
 # 3. GIAO DIỆN CHÍNH & THUẬT TOÁN ĐIỀU PHỐI
 # ==========================================
@@ -518,7 +571,7 @@ try:
     
     df_f1 = df_full[df_full['Nganh_Hang'].isin(selected_nganh)]
     list_chungloai = df_f1['Chung_Loai'].unique().tolist() if 'Chung_Loai' in df_f1.columns else []
-    selected_chungloai = st.sidebar.multiselect("Chủng loại", list_chungloai, default=list_chungloai) if list_chungloai else []
+    selected_chungloai = st.sidebar.multiselect("Chủng loại", list_chungloai, default=selected_chungloai) if list_chungloai else []
     
     df_f2 = df_f1[df_f1['Chung_Loai'].isin(selected_chungloai)] if selected_chungloai else df_f1
     list_hang = df_f2['Hang'].unique().tolist()
@@ -574,7 +627,7 @@ try:
     m1.metric("TỔNG VỐN TỒN KHO", f"{df['Ton_Kho_Value'].sum():,.0f} ₫")
     m2.metric("SỐ LƯỢNG SKU", f"{len(df):,}")
     
-    # Thiết kế lại m3 sử dụng thẻ HTML có tích hợp Tooltip (ĐÃ ĐẨY LÊN TRÊN CARD - Mục 1)
+    # Thiết kế lại m3 sử dụng thẻ HTML có tích hợp Tooltip (Đuy tooltip lên trên đầu - Mục 1)
     with m3:
         st.markdown(f"""
         <div class="custom-hero-card">
@@ -641,7 +694,7 @@ try:
                 title="Tỷ trọng vốn theo Hãng", 
                 color_discrete_sequence=px.colors.qualitative.Set2
             )
-            # Tối ưu hóa Tooltip Việt hóa cho biểu đồ hãng, hỗ trợ Scale responsive (Mục 2)
+            # Tối ưu hóa Tooltip Việt hóa cho biểu đồ hãng, hỗ trợ Scale responsive
             fig_pie_hang.update_traces(
                 textposition='inside', 
                 textinfo='percent',
@@ -652,14 +705,14 @@ try:
                 legend=dict(
                     orientation="h",
                     yanchor="top",
-                    y=-0.1,  # Co lại khoảng cách chú thích để không đè biểu đồ trên Mobile (Mục 2)
+                    y=-0.1,  
                     xanchor="center",
                     x=0.5,
-                    font=dict(size=9) # Scale nhỏ cỡ chữ chú thích trên di động (Mục 2)
+                    font=dict(size=9) 
                 ),
                 paper_bgcolor='rgba(0,0,0,0)', 
                 plot_bgcolor='rgba(0,0,0,0)',
-                margin=dict(t=50, b=50, l=10, r=10), # Thu gọn margin đáy từ 120px thành 50px (Mục 2)
+                margin=dict(t=50, b=50, l=10, r=10), 
                 font=dict(family="Montserrat", color="#1e293b")
             )
             st.plotly_chart(fig_pie_hang, use_container_width=True)
@@ -755,7 +808,7 @@ try:
         
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # 3. Thuật toán tính toán nhóm 10 khách hàng có doanh thu thấp nhất (Mục 2)
+        # 3. Thuật toán tính toán nhóm 10 khách hàng có doanh thu thấp nhất
         all_cust_rev = df_xb_clean.groupby('Khach_Hang')['Value'].sum().reset_index()
         
         # Chỉ lọc xét các khách hàng thực tế có phát sinh doanh thu lớn hơn 0
