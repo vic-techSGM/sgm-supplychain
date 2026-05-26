@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.express as px
 import datetime
 import io
+import unicodedata
 
 # ==========================================
 # 1. CẤU HÌNH GIAO DIỆN LIGHT MODE & FONT MONTSERRAT
@@ -291,7 +292,7 @@ st.markdown("""
     .smart-card-error { background: #fef2f2 !important; border-left: 5px solid #ef4444 !important; padding: 22px; border-radius: 12px; color: #7f1d1d !important; margin-bottom: 18px; box-shadow: 0 4px 12px rgba(239,68,68,0.08); border-top: 1px solid rgba(239,68,68,0.1); }
     .smart-card-warning { background: #fffbeb !important; border-left: 5px solid #f59e0b !important; padding: 22px; border-radius: 12px; color: #78350f !important; margin-bottom: 18px; box-shadow: 0 4px 12px rgba(245,158,11,0.08); border-top: 1px solid rgba(245,158,11,0.1); }
 
-    /* THẺ HERO CARD TÙY BIẾN CHO S2S BÌNH QUÂN CÓ HOVER TOOLTIP (LUÔN BAY LÊN TRÊN CARD - Mục 1) */
+    /* THẺ HERO CARD TÙY BIẾN CHO S2S BÌNH QUÂN CÓ HOVER TOOLTIP (LUÔN BAY LÊN TRÊN CARD) */
     .custom-hero-card {
         background: linear-gradient(145deg, #fffdfa, #fdf4e7) !important; 
         border-radius: 16px !important;
@@ -348,7 +349,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- BỘ GIẢI MÃ SỐ CHUẨN TIẾNG VIỆT ĐỒNG BỘ DỮ LIỆU EXCEL (Mục 1) ---
+# --- THUẬT TOÁN ĐỊNH DẠNG SỐ VIỆT HÓA CHUẨN TRÁNH TRÙNG LẶP DO LỖI GÕ KÝ TỰ ---
 def clean_vietnamese_number(val):
     if pd.isna(val):
         return 0.0
@@ -376,6 +377,14 @@ def clean_vietnamese_number(val):
         return float(s)
     except:
         return 0.0
+
+# --- THUẬT TOÁN CHUẨN HÓA UNICODE TIẾNG VIỆT ĐỒNG BỘ GROUPBY (Mục 2) ---
+def normalize_vietnamese_text(text):
+    if pd.isna(text):
+        return ""
+    # Chuyển đổi khoảng trắng kép dư thừa thành khoảng trắng đơn và đưa về chuẩn NFC
+    s = " ".join(str(text).split())
+    return unicodedata.normalize('NFC', s)
 
 # ==========================================
 # 2. HỆ THỐNG XỬ LÝ DỮ LIỆU CHUẨN HÓA
@@ -433,13 +442,15 @@ def load_data():
         df_th['DVT'] = 'Cái'
         
     df_th = df_th.dropna(subset=['SKU'])
-    df_th['SKU'] = df_th['SKU'].astype(str).str.strip()
+    
+    # Áp dụng chuẩn hóa Unicode NFC chống trùng lặp nhóm (Mục 2)
+    df_th['SKU'] = df_th['SKU'].apply(normalize_vietnamese_text)
     
     for col in ['Nganh_Hang', 'Chung_Loai', 'Hang']:
         if col in df_th.columns: 
-            df_th[col] = df_th[col].fillna('Khác').astype(str).str.strip()
+            df_th[col] = df_th[col].fillna('Khác').astype(str).str.strip().apply(normalize_vietnamese_text)
             
-    df_th['DVT'] = df_th['DVT'].fillna('Cái').astype(str).str.strip()
+    df_th['DVT'] = df_th['DVT'].fillna('Cái').astype(str).str.strip().apply(normalize_vietnamese_text)
     
     for col in ['Xuat_Ban_SL', 'Ton_Kho_SL', 'Ton_Kho_Value', 'Het_HSD_Value']:
         if col in df_th.columns: 
@@ -478,13 +489,14 @@ def load_data():
         val_col_name: 'Value'
     }, inplace=True)
     
-    df_xb_clean['SKU'] = df_xb_clean['SKU'].astype(str).str.strip()
-    df_xb_clean['Khach_Hang'] = df_xb_clean['Khach_Hang'].astype(str).str.strip()
+    # Áp dụng chuẩn hóa Unicode NFC chống trùng lặp nhóm cho toàn bộ Khách hàng (Mục 2)
+    df_xb_clean['Khach_Hang'] = df_xb_clean['Khach_Hang'].apply(normalize_vietnamese_text)
+    df_xb_clean['SKU'] = df_xb_clean['SKU'].apply(normalize_vietnamese_text)
     
     # Loại bỏ các dòng ghi chú tổng hợp trống
-    df_xb_clean = df_xb_clean[df_xb_clean['Khach_Hang'].str.lower() != 'nan']
+    df_xb_clean = df_xb_clean[df_xb_clean['Khach_Hang'] != '']
     
-    # Giải quyết triệt để lỗi chuyển đổi chuỗi số từ Excel tiếng Việt (Mục 1)
+    # Giải quyết triệt để lỗi chuyển đổi chuỗi số từ Excel tiếng Việt
     df_xb_clean['Value'] = df_xb_clean['Value'].apply(clean_vietnamese_number)
     df_xb_clean['Quantity'] = df_xb_clean['Quantity'].apply(clean_vietnamese_number)
 
@@ -656,7 +668,7 @@ try:
     m1.metric("TỔNG VỐN TỒN KHO", f"{df['Ton_Kho_Value'].sum():,.0f} ₫")
     m2.metric("SỐ LƯỢNG SKU", f"{len(df):,}")
     
-    # Thiết kế lại m3 sử dụng thẻ HTML có tích hợp Tooltip (Đuy tooltip lên trên đầu - Mục 1)
+    # Thiết kế lại m3 sử dụng thẻ HTML có tích hợp Tooltip (Đuy tooltip lên trên đầu)
     with m3:
         st.markdown(f"""
         <div class="custom-hero-card">
@@ -878,7 +890,7 @@ try:
         if not selected_kh:
             st.info("Vui lòng gõ tên hoặc chọn ít nhất một Khách Hàng từ hộp tìm kiếm phía trên để hiển thị phân tích dữ liệu.")
 
-        # --- THUẬT TOÁN HIỂN THỊ CHI TIẾT KHI CHỌN DUY NHẤT 1 KHÁCH HÀNG (Mục 1, 2 & 3) ---
+        # --- THUẬT TOÁN HIỂN THỊ CHI TIẾT KHI CHỌN DUY NHẤT 1 KHÁCH HÀNG (Mục 1 & 2) ---
         elif len(selected_kh) == 1:
             cust = selected_kh[0]
             cust_tx = df_xb_clean[df_xb_clean['Khach_Hang'] == cust].copy()
@@ -889,12 +901,12 @@ try:
                 ordered_months = cust_tx.sort_values('Date_Filter')['Thang_Str'].dropna().unique().tolist()
                 months_history_html = "<br>".join(ordered_months) if ordered_months else "Chưa có lịch sử"
                 
-                # 2. Tính giá trị đơn hàng bình quân và xây dựng Tooltip hiển thị doanh thu theo từng tháng
+                # 2. Tính giá trị đơn hàng bình quân và xây dựng Tooltip hiển thị doanh thu theo từng tháng (Đảm bảo chuẩn số liệu gốc)
                 avg_order_val = cust_tx.groupby('Date_Filter')['Value'].sum().mean()
                 if pd.isna(avg_order_val):
                     avg_order_val = 0.0
                 
-                # Tính tổng chi tiêu theo tháng để hiển thị trên Tooltip của Card Đơn hàng trung bình (Sửa lỗi tính toán sai - Mục 1 & 3)
+                # Tính tổng chi tiêu theo tháng để hiển thị trên Tooltip của Card Đơn hàng trung bình
                 monthly_totals = cust_tx.groupby('Thang_Str')['Value'].sum().reset_index()
                 monthly_totals['Date_Sort'] = pd.to_datetime(monthly_totals['Thang_Str'], format='%m/%Y')
                 monthly_totals = monthly_totals.sort_values('Date_Sort')
@@ -906,10 +918,9 @@ try:
                 if not monthly_totals_html:
                     monthly_totals_html = "Chưa ghi nhận dữ liệu doanh thu"
 
-                # Ánh xạ lấy tên sản phẩm mô tả (Hãng) và ĐVT tương ứng từ bảng Tổng hợp
-                sku_name_map = df.set_index('SKU')['Hang'].to_dict()
+                # Ánh xạ lấy Hãng và ĐVT tương ứng từ bảng Tổng hợp
+                sku_brand_map = df.set_index('SKU')['Hang'].to_dict()
                 sku_dvt_map = df.set_index('SKU')['DVT'].to_dict()
-                cust_tx['Product_Name'] = cust_tx['SKU'].map(sku_name_map).fillna(cust_tx['SKU'])
 
                 # 3. Thuật toán đo lường chuỗi đặt hàng liên tục (Streak) không đứt quãng theo tháng cho Top 5 SKU
                 def get_max_streak(dates_series):
@@ -975,34 +986,37 @@ try:
                     """, unsafe_allow_html=True)
                 st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
 
-                # --- PHẦN HIỂN THỊ KẾT QUẢ GIAO DỊCH CHI TIẾT THEO BỐ CỤC KHÁCH HÀNG (Mục 2) ---
+                # --- PHẦN KHAI BÁO PHÂN TÍCH GIAO DỊCH CHI TIẾT ĐỒNG BỘ ĐVT, SKU, HÃNG, TRỊ GIÁ (Mục 1) ---
                 total_cust_spend = cust_tx['Value'].sum()
                 cust_skus_count = cust_tx['SKU'].nunique()
                 
-                # Tìm giao dịch lớn nhất của khách hàng này
+                # Tìm mốc giao dịch có doanh thu lớn nhất
                 largest_idx = cust_tx['Value'].idxmax()
                 largest_row = cust_tx.loc[largest_idx]
                 largest_val = largest_row['Value']
-                largest_product = largest_row['Product_Name']
+                largest_sku = largest_row['SKU'] # Đây là mô tả đầy đủ của sản phẩm
+                largest_brand = sku_brand_map.get(largest_sku, "Khác")
+                largest_dvt = sku_dvt_map.get(largest_sku, largest_row['DVT_Xuat'])
                 largest_month = largest_row['Date_Filter'].strftime('%m/%Y')
                 
-                # Tìm các giao dịch tiêu biểu khác (Top 4 mốc giao dịch tiếp theo xếp hạng giảm dần)
+                # Tìm top 4 giao dịch lớn tiếp theo xếp hạng giảm dần
                 other_txs = cust_tx.drop(index=largest_idx).sort_values(by='Value', ascending=False).head(4)
                 other_tx_lines = []
                 for _, row in other_txs.iterrows():
-                    p_name = row['Product_Name']
-                    val = row['Value']
-                    m_str = row['Date_Filter'].strftime('%m/%Y')
-                    dvt = sku_dvt_map.get(row['SKU'], row['DVT_Xuat'])
-                    other_tx_lines.append(f"{p_name} ({dvt}): <b>{val:,.0f} ₫</b> (Tháng {m_str})")
+                    r_sku = row['SKU']
+                    r_brand = sku_brand_map.get(r_sku, "Khác")
+                    r_dvt = sku_dvt_map.get(r_sku, row['DVT_Xuat'])
+                    r_val = row['Value']
+                    r_month = row['Date_Filter'].strftime('%m/%Y')
+                    other_tx_lines.append(f"• <b>{r_sku}</b> — Hãng: <b>{r_brand}</b> — Đvt: <b>{r_dvt}</b> — Trị giá: <b>{r_val:,.0f} ₫</b> (Tháng {r_month})")
                 other_tx_html = "<br>".join(other_tx_lines) if other_tx_lines else "Không có giao dịch tiêu biểu khác"
 
-                # Gán hiển thị chính xác thẻ đánh giá (Mục 2)
+                # Hiển thị cấu trúc mô tả chi tiết giao dịch (Mục 1)
                 st.markdown(f"""
                 <div class="smart-card-success">
                     <b style="color:#15803d; font-size:16px;">📊 ĐÁNH GIÁ KHÁCH HÀNG:</b><br><br>
                     • Khách hàng <b>{cust}</b> đem lại doanh thu lũy kế <b>{total_cust_spend:,.0f} ₫</b> trên tổng số <b>{cust_skus_count} mã SKU</b>.<br><br>
-                    • <b>Giao dịch lớn nhất:</b> <b>{largest_val:,.0f} ₫</b> ({largest_product} vào tháng {largest_month}).<br>
+                    • <b>Giao dịch lớn nhất:</b> <b>{largest_sku}</b> — Hãng: <b>{largest_brand}</b> — Đvt: <b>{largest_dvt}</b> — Trị giá: <b>{largest_val:,.0f} ₫</b> (Tháng {largest_month}).<br><br>
                     • <b>Các giao dịch tiêu biểu khác:</b><br>
                     {other_tx_html}
                 </div>
@@ -1023,7 +1037,6 @@ try:
                     labels={'Quantity': 'Sản lượng tiêu thụ', 'SKU': 'Mã SKU'},
                     color_discrete_sequence=px.colors.qualitative.Pastel
                 )
-                # Tối ưu hóa Tooltip Việt hóa cho biểu đồ cột sản lượng SKU
                 fig_bar_sku.update_traces(
                     texttemplate='%{text:,.0f}', 
                     textposition='outside',
