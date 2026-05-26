@@ -1,1 +1,15 @@
+name: Keep Streamlit App Awake
 
+on:
+  schedule:
+    # Chạy tự động vào lúc 0h và 12h mỗi ngày
+    - cron: '0 0,12 * * *'
+  workflow_dispatch: # Cho phép bấm chạy thủ công nếu muốn
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send a request to Streamlit App
+        run: |
+          curl -I https://saigonmed-kho.streamlit.app/
