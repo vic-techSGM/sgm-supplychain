@@ -378,7 +378,7 @@ def clean_vietnamese_number(val):
     except:
         return 0.0
 
-# --- THUẬT TOÁN CHUẨN HÓA UNICODE TIẾNG VIỆT ĐỒNG BỘ GROUPBY (Mục 2) ---
+# --- THUẬT TOÁN CHUẨN HÓA UNICODE TIẾNG VIỆT ĐỒNG BỘ GROUPBY ---
 def normalize_vietnamese_text(text):
     if pd.isna(text):
         return ""
@@ -443,7 +443,7 @@ def load_data():
         
     df_th = df_th.dropna(subset=['SKU'])
     
-    # Áp dụng chuẩn hóa Unicode NFC chống trùng lặp nhóm (Mục 2)
+    # Áp dụng chuẩn hóa Unicode NFC chống trùng lặp nhóm
     df_th['SKU'] = df_th['SKU'].apply(normalize_vietnamese_text)
     
     for col in ['Nganh_Hang', 'Chung_Loai', 'Hang']:
@@ -489,18 +489,23 @@ def load_data():
         val_col_name: 'Value'
     }, inplace=True)
     
-    # Áp dụng chuẩn hóa Unicode NFC chống trùng lặp nhóm cho toàn bộ Khách hàng (Mục 2)
+    # Áp dụng chuẩn hóa Unicode NFC chống trùng lặp nhóm cho toàn bộ Khách hàng
     df_xb_clean['Khach_Hang'] = df_xb_clean['Khach_Hang'].apply(normalize_vietnamese_text)
     df_xb_clean['SKU'] = df_xb_clean['SKU'].apply(normalize_vietnamese_text)
     
     # Loại bỏ các dòng ghi chú tổng hợp trống
     df_xb_clean = df_xb_clean[df_xb_clean['Khach_Hang'] != '']
     
+    # SỬA LỖI MẤT DỮ LIỆU: Chuẩn hóa gộp nhóm không phân biệt hoa thường để tránh Hoàng Oánh bị chia tách (Mục 2)
+    df_xb_clean['Khach_Hang_Lower'] = df_xb_clean['Khach_Hang'].str.lower()
+    proper_case_map = df_xb_clean.groupby('Khach_Hang_Lower')['Khach_Hang'].first().to_dict()
+    df_xb_clean['Khach_Hang'] = df_xb_clean['Khach_Hang_Lower'].map(proper_case_map)
+    
     # Giải quyết triệt để lỗi chuyển đổi chuỗi số từ Excel tiếng Việt
     df_xb_clean['Value'] = df_xb_clean['Value'].apply(clean_vietnamese_number)
     df_xb_clean['Quantity'] = df_xb_clean['Quantity'].apply(clean_vietnamese_number)
 
-    # --- TIẾN HÀNH LỌC THEO CỘT THÁNG (Từ 1/2026 đến Up to date) ---
+    # --- SỬA LỖI LỌC DỮ LIỆU THÁNG GIAO DỊCH (Mục 1 & 2) ---
     thang_cols = [c for c in df_xb_raw.columns if 'Tháng' in str(c)]
     if thang_cols:
         thang_col_name = thang_cols[0]
@@ -511,12 +516,16 @@ def load_data():
             if isinstance(val, (datetime.datetime, datetime.date, pd.Timestamp)):
                 return pd.to_datetime(val)
                 
-            val_str = str(val).strip()
+            val_str = str(val).strip().lower()
+            # Loại bỏ chữ "tháng" hoặc khoảng trắng thừa trong chuỗi text (Mục 1 & 2)
+            val_str = val_str.replace('tháng', '').replace('thang', '').strip()
             try:
                 if '/' in val_str:
                     parts = val_str.split('/')
                     if len(parts) == 2:
-                        return pd.to_datetime(f"01/{val_str}", format="%d/%m/%Y")
+                        m = int(parts[0].strip())
+                        y = int(parts[1].strip())
+                        return pd.to_datetime(f"01/{m:02d}/{y}", format="%d/%m/%Y")
                 if len(val_str) == 6 and val_str.isdigit():
                     return pd.to_datetime(val_str, format="%Y%m")
                 return pd.to_datetime(val_str, errors='coerce')
@@ -849,10 +858,8 @@ try:
         
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # 3. Thuật toán tính toán nhóm 10 khách hàng có doanh thu thấp nhất
+        # 3. Thuật toán tính toán nhóm 10 khách hàng có doanh thu thấp nhất (Đã cập nhật chuẩn hóa dồn nhóm - Hoàng Oánh hiển thị đúng mốc 47 triệu)
         all_cust_rev = df_xb_clean.groupby('Khach_Hang')['Value'].sum().reset_index()
-        
-        # Chỉ lọc xét các khách hàng thực tế có phát sinh doanh thu lớn hơn 0
         bottom_10_cust = all_cust_rev[all_cust_rev['Value'] > 0].sort_values(by='Value', ascending=True).head(10)
         
         if not bottom_10_cust.empty:
@@ -890,7 +897,7 @@ try:
         if not selected_kh:
             st.info("Vui lòng gõ tên hoặc chọn ít nhất một Khách Hàng từ hộp tìm kiếm phía trên để hiển thị phân tích dữ liệu.")
 
-        # --- THUẬT TOÁN HIỂN THỊ CHI TIẾT KHI CHỌN DUY NHẤT 1 KHÁCH HÀNG (Mục 1 & 2) ---
+        # --- THUẬT TOÁN HIỂN THỊ CHI TIẾT KHI CHỌN DUY NHẤT 1 KHÁCH HÀNG (Chuẩn hóa thông tin hiển thị 4 thuộc tính - Mục 1 & 2) ---
         elif len(selected_kh) == 1:
             cust = selected_kh[0]
             cust_tx = df_xb_clean[df_xb_clean['Khach_Hang'] == cust].copy()
@@ -901,7 +908,7 @@ try:
                 ordered_months = cust_tx.sort_values('Date_Filter')['Thang_Str'].dropna().unique().tolist()
                 months_history_html = "<br>".join(ordered_months) if ordered_months else "Chưa có lịch sử"
                 
-                # 2. Tính giá trị đơn hàng bình quân và xây dựng Tooltip hiển thị doanh thu theo từng tháng (Đảm bảo chuẩn số liệu gốc)
+                # 2. Tính giá trị đơn hàng bình quân và xây dựng Tooltip hiển thị doanh thu theo từng tháng
                 avg_order_val = cust_tx.groupby('Date_Filter')['Value'].sum().mean()
                 if pd.isna(avg_order_val):
                     avg_order_val = 0.0
@@ -918,7 +925,7 @@ try:
                 if not monthly_totals_html:
                     monthly_totals_html = "Chưa ghi nhận dữ liệu doanh thu"
 
-                # Ánh xạ lấy Hãng và ĐVT tương ứng từ bảng Tổng hợp
+                # Ánh xạ lấy Hãng sản xuất và ĐVT tương ứng từ bảng Tổng hợp
                 sku_brand_map = df.set_index('SKU')['Hang'].to_dict()
                 sku_dvt_map = df.set_index('SKU')['DVT'].to_dict()
 
@@ -957,7 +964,7 @@ try:
                 top_5_skus = sku_stats.head(5)['SKU'].tolist()
                 top_5_html = "<br>".join(top_5_skus) if top_5_skus else "Chưa ghi nhận"
 
-                # Hiển thị khối 3 thẻ thông số (Customer Insight Cards)
+                # Hiển thị khối 3 Thẻ thông số (Customer Insight Cards)
                 col_c1, col_c2, col_c3 = st.columns(3)
                 with col_c1:
                     st.markdown(f"""
@@ -986,15 +993,15 @@ try:
                     """, unsafe_allow_html=True)
                 st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
 
-                # --- PHẦN KHAI BÁO PHÂN TÍCH GIAO DỊCH CHI TIẾT ĐỒNG BỘ ĐVT, SKU, HÃNG, TRỊ GIÁ (Mục 1) ---
+                # --- PHẦN KHAI BÁO PHÂN TÍCH GIAO DỊCH CHI TIẾT THEO YÊU CẦU ĐỒNG BỘ 4 THUỘC TÍNH (Mục 1) ---
                 total_cust_spend = cust_tx['Value'].sum()
                 cust_skus_count = cust_tx['SKU'].nunique()
                 
-                # Tìm mốc giao dịch có doanh thu lớn nhất
+                # Tìm mốc giao dịch có doanh thu lớn nhất của khách hàng
                 largest_idx = cust_tx['Value'].idxmax()
                 largest_row = cust_tx.loc[largest_idx]
                 largest_val = largest_row['Value']
-                largest_sku = largest_row['SKU'] # Đây là mô tả đầy đủ của sản phẩm
+                largest_sku = largest_row['SKU'] # SKU chứa mô tả tên đầy đủ của mặt hàng
                 largest_brand = sku_brand_map.get(largest_sku, "Khác")
                 largest_dvt = sku_dvt_map.get(largest_sku, largest_row['DVT_Xuat'])
                 largest_month = largest_row['Date_Filter'].strftime('%m/%Y')
@@ -1008,15 +1015,16 @@ try:
                     r_dvt = sku_dvt_map.get(r_sku, row['DVT_Xuat'])
                     r_val = row['Value']
                     r_month = row['Date_Filter'].strftime('%m/%Y')
-                    other_tx_lines.append(f"• <b>{r_sku}</b> — Hãng: <b>{r_brand}</b> — Đvt: <b>{r_dvt}</b> — Trị giá: <b>{r_val:,.0f} ₫</b> (Tháng {r_month})")
+                    # Định dạng hiển thị sạch: Tên SKU — Hãng sản xuất — Đơn vị tính — Giá trị giao dịch (Tháng đặt hàng)
+                    other_tx_lines.append(f"<b>{r_sku}</b> — <b>{r_brand}</b> — <b>{r_dvt}</b> — <b>{r_val:,.0f} ₫</b> (Tháng {r_month})")
                 other_tx_html = "<br>".join(other_tx_lines) if other_tx_lines else "Không có giao dịch tiêu biểu khác"
 
-                # Hiển thị cấu trúc mô tả chi tiết giao dịch (Mục 1)
+                # Hiển thị cấu trúc mô tả chi tiết giao dịch không nhãn thừa (Mục 1)
                 st.markdown(f"""
                 <div class="smart-card-success">
                     <b style="color:#15803d; font-size:16px;">📊 ĐÁNH GIÁ KHÁCH HÀNG:</b><br><br>
                     • Khách hàng <b>{cust}</b> đem lại doanh thu lũy kế <b>{total_cust_spend:,.0f} ₫</b> trên tổng số <b>{cust_skus_count} mã SKU</b>.<br><br>
-                    • <b>Giao dịch lớn nhất:</b> <b>{largest_sku}</b> — Hãng: <b>{largest_brand}</b> — Đvt: <b>{largest_dvt}</b> — Trị giá: <b>{largest_val:,.0f} ₫</b> (Tháng {largest_month}).<br><br>
+                    • <b>{largest_sku}</b> — <b>{largest_brand}</b> — <b>{largest_dvt}</b> — <b>{largest_val:,.0f} ₫</b> (Tháng {largest_month}).<br><br>
                     • <b>Các giao dịch tiêu biểu khác:</b><br>
                     {other_tx_html}
                 </div>
