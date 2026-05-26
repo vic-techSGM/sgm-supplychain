@@ -280,6 +280,61 @@ st.markdown("""
     .smart-card-success { background: #f0fdf4 !important; border-left: 5px solid #10b981 !important; padding: 22px; border-radius: 12px; color: #14532d !important; margin-bottom: 18px; box-shadow: 0 4px 12px rgba(16,185,129,0.08); border-top: 1px solid rgba(16,185,129,0.1); }
     .smart-card-error { background: #fef2f2 !important; border-left: 5px solid #ef4444 !important; padding: 22px; border-radius: 12px; color: #7f1d1d !important; margin-bottom: 18px; box-shadow: 0 4px 12px rgba(239,68,68,0.08); border-top: 1px solid rgba(239,68,68,0.1); }
     .smart-card-warning { background: #fffbeb !important; border-left: 5px solid #f59e0b !important; padding: 22px; border-radius: 12px; color: #78350f !important; margin-bottom: 18px; box-shadow: 0 4px 12px rgba(245,158,11,0.08); border-top: 1px solid rgba(245,158,11,0.1); }
+
+    /* THẺ HERO CARD TÙY BIẾN CHO S2S BÌNH QUÂN CÓ HOVER TOOLTIP */
+    .custom-hero-card {
+        background: linear-gradient(145deg, #fffdfa, #fdf4e7) !important; 
+        border-radius: 16px !important;
+        padding: 16px 20px !important;
+        box-shadow: 6px 10px 20px rgba(139,92,26,0.06), -2px -2px 8px rgba(255,255,255,0.8) !important;
+        border-left: 5px solid #fb923c !important; 
+        border-top: 1px solid rgba(251,146,60,0.1) !important;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+        position: relative;
+        cursor: pointer;
+    }
+    .custom-hero-card:hover {
+        transform: translateY(-5px) scale(1.01); 
+        box-shadow: 8px 14px 24px rgba(139,92,26,0.1), -2px -2px 10px rgba(255,255,255,0.9) !important;
+    }
+    .custom-hero-card .hero-label {
+        color: #c2410c !important; 
+        font-size: 11px !important; 
+        text-transform: uppercase; 
+        font-weight: 800 !important; 
+        letter-spacing: 0.8px; 
+    }
+    .custom-hero-card .hero-value {
+        color: #1e293b !important; 
+        font-size: 26px !important; 
+        font-weight: 900 !important; 
+        margin-top: 4px;
+    }
+    .custom-hero-card .tooltip-hero {
+        visibility: hidden;
+        width: 300px;
+        background-color: #1e293b;
+        color: #f8fafc;
+        text-align: left;
+        border-radius: 12px;
+        padding: 15px;
+        position: absolute;
+        z-index: 10000;
+        top: 110%; /* Hiển thị phía dưới Card */
+        left: 50%;
+        margin-left: -150px;
+        opacity: 0;
+        transition: opacity 0.2s, visibility 0.2s;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+        font-size: 12px;
+        font-weight: 500;
+        line-height: 1.5;
+        border: 1px solid #475569;
+    }
+    .custom-hero-card:hover .tooltip-hero {
+        visibility: visible;
+        opacity: 1;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -564,7 +619,20 @@ try:
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("TỔNG VỐN TỒN KHO", f"{df['Ton_Kho_Value'].sum():,.0f} ₫")
     m2.metric("SỐ LƯỢNG SKU", f"{len(df):,}")
-    m3.metric("S2S BÌNH QUÂN", f"{avg_s2s_global:.1f} Tháng")
+    # Thiết kế lại m3 sử dụng thẻ HTML có tích hợp Tooltip (Mục 1)
+    with m3:
+        st.markdown(f"""
+        <div class="custom-hero-card">
+            <div class="hero-label">S2S BÌNH QUÂN</div>
+            <div class="hero-value">{avg_s2s_global:.1f} Tháng</div>
+            <div class="tooltip-hero">
+                <strong style="color: #fb923c; font-size: 13px;">Chỉ số S2S (Stock-to-Sales) Bình quân:</strong><br><br>
+                • <b>Định nghĩa S2S:</b> Biểu thị số tháng cần thiết để phân phối hết lượng hàng hóa đang lưu kho thực tế dựa trên tốc độ tiêu thụ hiện tại.<br>
+                • <b>Thuật toán:</b> Bằng Tổng sản lượng tồn kho của toàn bộ hệ thống chia cho Tổng doanh số bán hàng trung bình mỗi tháng.<br>
+                • <b>Ý nghĩa điều phối:</b> Hỗ trợ nhà quản trị nhận định nhanh thời gian quay vòng của toàn bộ nguồn vốn đang lưu chuyển trong kho.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
     m4.metric("KHÁCH HÀNG CÓ GIAO DỊCH", f"{int(total_active_customers_clean):,}")
 
     st.markdown("<br>", unsafe_allow_html=True)
@@ -708,9 +776,31 @@ try:
             st.success("Không có mặt hàng nào cần đặt mua trong danh mục lọc hiện tại.")
 
     # --- TAB 2: KHÁCH HÀNG THEO SKU ---
+    # --- TAB 2: KHÁCH HÀNG THEO SKU ---
     with tab2:
         st.markdown("<h3 style='font-weight: 800;'>🔍 Phân tích Hành vi Khách hàng theo SKU</h3>", unsafe_allow_html=True)
 
+        # 1. Thuật toán tính toán tự động TOP 5 Khách hàng có doanh thu cao nhất cho đến thời điểm up-to-date (Mục 2)
+        top_5_cust = df_xb_clean.groupby('Khach_Hang')['Value'].sum().reset_index()
+        top_5_cust = top_5_cust.sort_values(by='Value', ascending=False).head(5)
+        
+        st.markdown("<h4 style='font-weight: 800; margin-top: 15px; margin-bottom: 12px; color: #1e293b;'>👑 TOP 5 KHÁCH HÀNG ĐANG CÓ DOANH THU CAO NHẤT</h4>", unsafe_allow_html=True)
+        
+        # 2. Xây dựng Layout hàng ngang gồm 5 cột hiển thị tên và doanh thu tổng của từng Khách hàng
+        cols_top = st.columns(5)
+        for idx, row in enumerate(top_5_cust.iterrows()):
+            with cols_top[idx]:
+                st.markdown(f"""
+                <div style="background: linear-gradient(135deg, #f8fafc, #eff6ff); border: 1px solid #bfdbfe; border-top: 4px solid #3b82f6; padding: 12px 15px; border-radius: 10px; min-height: 85px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.04);">
+                    <div style="color: #1e3a8a; font-size: 11px; font-weight: 800; text-transform: uppercase;">Hạng {idx+1}</div>
+                    <div style="color: #334155; font-size: 13px; font-weight: 700; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{row[1]['Khach_Hang']}">{row[1]['Khach_Hang']}</div>
+                    <div style="color: #2563eb; font-size: 14px; font-weight: 800; margin-top: 2px;">{row[1]['Value']:,.0f} ₫</div>
+                </div>
+                """, unsafe_allow_html=True)
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        # 3. Đẩy hộp tìm kiếm đa lựa chọn xuống dưới (Mục 2)
         list_kh = sorted(customer_mapping['Khach_Hang'].unique().tolist())
         selected_kh = st.multiselect("Gõ tên hoặc chọn để tìm kiếm Khách Hàng (có thể chọn nhiều để so sánh):", list_kh)
         
