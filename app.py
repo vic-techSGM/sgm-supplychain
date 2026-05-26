@@ -1,4 +1,4 @@
-import streamlit as st
+import streamlit st
 import pandas as pd
 import plotly.express as px
 import datetime
@@ -14,7 +14,7 @@ st.markdown("""
     /* Nhúng font Montserrat đồng bộ toàn diện hệ thống */
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap');
     
-    /* CHỈ ÉP FONT CHO THẺ CONTAINER CHÍNH & VĂN BẢN (KHÔNG ÉP LÊN TOÀN BỘ BUTTON/SPAN) */
+    /* CHỈ ÁP DỤNG FONT CHO CÁC THẺ VĂN BẢN (KHÔNG ĐÈ LÊN THƯ VIỆN ICON CỦA GLIDE TABLE VÀ SIDEBAR) */
     html, body, [data-testid="stAppViewContainer"] {
         font-family: 'Montserrat', sans-serif;
     }
@@ -26,6 +26,16 @@ st.markdown("""
     /* Loại trừ thẻ span thông thường để không phá vỡ icon ghim/ẩn cột của bảng */
     .stApp p, .stApp label, .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6 {
         font-family: 'Montserrat', sans-serif !important;
+    }
+
+    /* ĐẢM BẢO TUYỆT ĐỐI KHÔNG GHI ĐÈ ICON THU NHỎ/MỞ RỘNG SIDEBAR VÀ HEADER TRÊN MOBILE */
+    button[data-testid*="CollapseButton"] *,
+    button[class*="CollapseButton"] *,
+    button[data-testid="baseButton-header"] *,
+    [data-testid="stHeader"] *,
+    [class*="Icon"] *,
+    .material-icons {
+        font-family: inherit !important;
     }
 
     /* -----------------------------------
@@ -281,7 +291,7 @@ st.markdown("""
     .smart-card-error { background: #fef2f2 !important; border-left: 5px solid #ef4444 !important; padding: 22px; border-radius: 12px; color: #7f1d1d !important; margin-bottom: 18px; box-shadow: 0 4px 12px rgba(239,68,68,0.08); border-top: 1px solid rgba(239,68,68,0.1); }
     .smart-card-warning { background: #fffbeb !important; border-left: 5px solid #f59e0b !important; padding: 22px; border-radius: 12px; color: #78350f !important; margin-bottom: 18px; box-shadow: 0 4px 12px rgba(245,158,11,0.08); border-top: 1px solid rgba(245,158,11,0.1); }
 
-    /* THẺ HERO CARD TÙY BIẾN CHO S2S BÌNH QUÂN CÓ HOVER TOOLTIP */
+    /* THẺ HERO CARD TÙY BIẾN CHO S2S BÌNH QUÂN CÓ HOVER TOOLTIP (LUÔN BAY LÊN TRÊN CARD - Mục 1) */
     .custom-hero-card {
         background: linear-gradient(145deg, #fffdfa, #fdf4e7) !important; 
         border-radius: 16px !important;
@@ -319,13 +329,13 @@ st.markdown("""
         border-radius: 12px;
         padding: 15px;
         position: absolute;
-        z-index: 10000;
-        top: 110%; /* Hiển thị phía dưới Card */
+        z-index: 99999 !important; /* Đẩy lớp hiển thị lên cao nhất để không bị đè */
+        bottom: 115%; /* Chuyển thành hiển thị bay lên trên Card (Mục 1) */
         left: 50%;
         margin-left: -150px;
         opacity: 0;
         transition: opacity 0.2s, visibility 0.2s;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+        box-shadow: 0 -10px 25px rgba(0,0,0,0.25); /* Bóng đổ hướng lên trên */
         font-size: 12px;
         font-weight: 500;
         line-height: 1.5;
@@ -407,24 +417,48 @@ def load_data():
             df_th[col] = pd.to_numeric(df_th[col], errors='coerce').fillna(0)
 
     # --- ĐỌC VÀ LỌC DỮ LIỆU SHEET XUẤT BÁN ---
+    # Đọc tiêu đề dòng 2 (Header = 1) để lấy đúng cột của bảng biểu thực tế
     df_xb_raw = pd.read_excel(url, sheet_name='Xuất bán', header=1)
+    
+    # Chuẩn hóa cột Mã SKU (Cột B - Index 1)
     cols = df_xb_raw.columns.tolist()
     cols[1] = 'SKU'
     df_xb_raw.columns = cols
     
+    # Tìm chính xác cột Khách hàng (Cột F - Index 5)
     kh_cols = [c for c in df_xb_raw.columns if 'Khách hàng' in str(c)]
     kh_col_name = kh_cols[0] if kh_cols else df_xb_raw.columns[5]
     
-    df_xb_raw['SKU'] = df_xb_raw['SKU'].astype(str).str.strip()
-    df_xb_raw[kh_col_name] = df_xb_raw[kh_col_name].astype(str).str.strip()
-
-    # Nhận diện cột thành tiền / doanh thu nếu có
-    val_cols = [c for c in df_xb_raw.columns if any(k in str(c).lower() for k in ['thành tiền', 'doanh thu', 'giá trị', 'tiền', 'val', 'amount', 'trị giá'])]
-    val_col_name = val_cols[0] if val_cols else None
-
-    # Nhận diện cột số lượng nếu có
-    qty_cols = [c for c in df_xb_raw.columns if any(k in str(c).lower() for k in ['số lượng', 'sl', 'qty', 'quantity'])]
-    qty_col_name = qty_cols[0] if qty_cols else None
+    # Tìm chính xác cột ĐVT (Cột C - Index 2)
+    dvt_cols = [c for c in df_xb_raw.columns if 'Đvt' in str(c) or 'ĐVT' in str(c)]
+    dvt_col_name = dvt_cols[0] if dvt_cols else df_xb_raw.columns[2]
+    
+    # Tìm chính xác cột Số lượng (Cột D - Index 3)
+    qty_cols = [c for c in df_xb_raw.columns if 'Số lượng' in str(c)]
+    qty_col_name = qty_cols[0] if qty_cols else df_xb_raw.columns[3]
+    
+    # Tìm chính xác cột Doanh thu (Cột E - Index 4)
+    val_cols = [c for c in df_xb_raw.columns if 'Doanh thu' in str(c)]
+    val_col_name = val_cols[0] if val_cols else df_xb_raw.columns[4]
+    
+    # Tiến hành chuẩn hóa lọc và làm sạch dữ liệu xuất bán theo đúng cột gốc (Đúng yêu cầu)
+    df_xb_clean = df_xb_raw.copy()
+    df_xb_clean.rename(columns={
+        kh_col_name: 'Khach_Hang',
+        dvt_col_name: 'DVT_Xuat',
+        qty_col_name: 'Quantity',
+        val_col_name: 'Value'
+    }, inplace=True)
+    
+    df_xb_clean['SKU'] = df_xb_clean['SKU'].astype(str).str.strip()
+    df_xb_clean['Khach_Hang'] = df_xb_clean['Khach_Hang'].astype(str).str.strip()
+    
+    # Loại bỏ các dòng ghi chú tổng hợp trống
+    df_xb_clean = df_xb_clean[df_xb_clean['Khach_Hang'].str.lower() != 'nan']
+    
+    # Convert số liệu chuẩn tránh lỗi trộn chữ của excel
+    df_xb_clean['Value'] = pd.to_numeric(df_xb_clean['Value'], errors='coerce').fillna(0)
+    df_xb_clean['Quantity'] = pd.to_numeric(df_xb_clean['Quantity'], errors='coerce').fillna(0)
 
     # --- TIẾN HÀNH LỌC THEO CỘT THÁNG (Từ 1/2026 đến Up to date) ---
     thang_cols = [c for c in df_xb_raw.columns if 'Tháng' in str(c)]
@@ -449,35 +483,9 @@ def load_data():
             except:
                 return pd.NaT
 
-        df_xb_raw['Date_Filter'] = df_xb_raw[thang_col_name].apply(parse_thang_to_date)
-        df_xb_raw = df_xb_raw[df_xb_raw['Date_Filter'] >= pd.to_datetime('2026-01-01')]
+        df_xb_clean['Date_Filter'] = df_xb_clean[thang_col_name].apply(parse_thang_to_date)
+        df_xb_clean = df_xb_clean[df_xb_clean['Date_Filter'] >= pd.to_datetime('2026-01-01')]
     
-    # Thiết lập cấu trúc dữ liệu bán hàng đồng bộ
-    df_xb_clean = df_xb_raw.copy()
-    df_xb_clean.rename(columns={kh_col_name: 'Khach_Hang'}, inplace=True)
-    df_xb_clean = df_xb_clean[df_xb_clean['Khach_Hang'] != 'nan']
-
-    if val_col_name:
-        df_xb_clean['Value'] = pd.to_numeric(df_xb_clean[val_col_name], errors='coerce').fillna(0)
-    else:
-        df_xb_clean['Value'] = 0.0
-
-    if qty_col_name:
-        df_xb_clean['Quantity'] = pd.to_numeric(df_xb_clean[qty_col_name], errors='coerce').fillna(0)
-    else:
-        df_xb_clean['Quantity'] = 1.0
-
-    # Ước tính giá trị doanh thu bằng đơn giá tồn kho nếu cột giá trị gốc trống hoặc bằng không
-    if not val_col_name or df_xb_clean['Value'].sum() == 0:
-        df_th_temp = df_th.copy()
-        df_th_temp['Unit_Price'] = df_th_temp['Ton_Kho_Value'] / (df_th_temp['Ton_Kho_SL'] + 0.0001)
-        price_map = df_th_temp.set_index('SKU')['Unit_Price'].to_dict()
-        df_xb_clean['Value'] = df_xb_clean['SKU'].map(price_map).fillna(0) * df_xb_clean['Quantity']
-
-    # Đồng bộ hóa định dạng Date_Filter
-    df_xb_clean['Date_Filter'] = pd.to_datetime(df_xb_clean['Date_Filter'], errors='coerce')
-    df_xb_clean = df_xb_clean.dropna(subset=['SKU', 'Khach_Hang'])
-
     customer_mapping = df_xb_clean[['SKU', 'Khach_Hang']].copy()
 
     # Số lượng khách hàng active theo từng SKU
@@ -486,60 +494,6 @@ def load_data():
     
     df = pd.merge(df_th, active_kh, on='SKU', how='left').fillna(0)
     return df, customer_mapping, df_xb_clean
-
-# --- THUẬT TOÁN ĐỊNH DẠNG FILE PO EXCEL BẰNG OPENPYXL (MẶC ĐỊNH SẴN CÓ) ---
-def to_excel(df_to_export):
-    output = io.BytesIO()
-    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        df_to_export.to_excel(writer, index=False, sheet_name='SGM_PO_Export')
-        workbook = writer.book
-        worksheet = writer.sheets['SGM_PO_Export']
-        
-        from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
-        from openpyxl.utils import get_column_letter
-        
-        # Định dạng Style màu xanh thương hiệu SGM
-        header_fill = PatternFill(start_color="388E3C", end_color="388E3C", fill_type="solid")
-        header_font = Font(name="Segoe UI", size=11, bold=True, color="FFFFFF")
-        cell_font = Font(name="Segoe UI", size=10)
-        
-        thin_border = Border(
-            left=Side(style='thin', color='DDDDDD'),
-            right=Side(style='thin', color='DDDDDD'),
-            top=Side(style='thin', color='DDDDDD'),
-            bottom=Side(style='thin', color='DDDDDD')
-        )
-        
-        # Thiết kế Header
-        for col_idx in range(1, len(df_to_export.columns) + 1):
-            cell = worksheet.cell(row=1, column=col_idx)
-            cell.fill = header_fill
-            cell.font = header_font
-            cell.alignment = Alignment(horizontal="center", vertical="center")
-            
-        # Thiết kế nội dung bảng dữ liệu
-        for row_idx in range(2, len(df_to_export) + 2):
-            for col_idx in range(1, len(df_to_export.columns) + 1):
-                cell = worksheet.cell(row=row_idx, column=col_idx)
-                cell.font = cell_font
-                cell.border = thin_border
-                
-                val = cell.value
-                if isinstance(val, (int, float)):
-                    cell.alignment = Alignment(horizontal="right")
-                    # Định dạng phân tách hàng nghìn cho số lượng và giá trị (Ngoại trừ Khách Hàng Active)
-                    if "Active" not in df_to_export.columns[col_idx-1]:
-                        cell.number_format = '#,##0'
-                else:
-                    cell.alignment = Alignment(horizontal="left")
-                    
-        # Tự động điều chỉnh độ rộng cột
-        for col in worksheet.columns:
-            max_len = max(len(str(cell.value or '')) for cell in col)
-            col_letter = get_column_letter(col[0].column)
-            worksheet.column_dimensions[col_letter].width = min(max(max_len + 3, 12), 40)
-            
-    return output.getvalue()
 
 # ==========================================
 # 3. GIAO DIỆN CHÍNH & THUẬT TOÁN ĐIỀU PHỐI
@@ -619,7 +573,8 @@ try:
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("TỔNG VỐN TỒN KHO", f"{df['Ton_Kho_Value'].sum():,.0f} ₫")
     m2.metric("SỐ LƯỢNG SKU", f"{len(df):,}")
-    # Thiết kế lại m3 sử dụng thẻ HTML có tích hợp Tooltip (Mục 1)
+    
+    # Thiết kế lại m3 sử dụng thẻ HTML có tích hợp Tooltip (ĐÃ ĐẨY LÊN TRÊN CARD - Mục 1)
     with m3:
         st.markdown(f"""
         <div class="custom-hero-card">
@@ -633,6 +588,7 @@ try:
             </div>
         </div>
         """, unsafe_allow_html=True)
+        
     m4.metric("KHÁCH HÀNG CÓ GIAO DỊCH", f"{int(total_active_customers_clean):,}")
 
     st.markdown("<br>", unsafe_allow_html=True)
@@ -776,11 +732,10 @@ try:
             st.success("Không có mặt hàng nào cần đặt mua trong danh mục lọc hiện tại.")
 
     # --- TAB 2: KHÁCH HÀNG THEO SKU ---
-    # --- TAB 2: KHÁCH HÀNG THEO SKU ---
     with tab2:
         st.markdown("<h3 style='font-weight: 800;'>🔍 Phân tích Hành vi Khách hàng theo SKU</h3>", unsafe_allow_html=True)
 
-        # 1. Thuật toán tính toán tự động TOP 5 Khách hàng có doanh thu cao nhất cho đến thời điểm up-to-date (Mục 2)
+        # 1. Thuật toán tính toán tự động TOP 5 Khách hàng có doanh thu cao nhất cho đến thời điểm up-to-date
         top_5_cust = df_xb_clean.groupby('Khach_Hang')['Value'].sum().reset_index()
         top_5_cust = top_5_cust.sort_values(by='Value', ascending=False).head(5)
         
@@ -799,8 +754,41 @@ try:
                 """, unsafe_allow_html=True)
         
         st.markdown("<br>", unsafe_allow_html=True)
+
+        # 3. Thuật toán tính toán nhóm 10 khách hàng có doanh thu thấp nhất (Mục 2)
+        all_cust_rev = df_xb_clean.groupby('Khach_Hang')['Value'].sum().reset_index()
         
-        # 3. Đẩy hộp tìm kiếm đa lựa chọn xuống dưới (Mục 2)
+        # Chỉ lọc xét các khách hàng thực tế có phát sinh doanh thu lớn hơn 0
+        bottom_10_cust = all_cust_rev[all_cust_rev['Value'] > 0].sort_values(by='Value', ascending=True).head(10)
+        
+        if not bottom_10_cust.empty:
+            fig_bottom = px.bar(
+                bottom_10_cust,
+                x='Value',
+                y='Khach_Hang',
+                orientation='h',
+                text='Value',
+                title="Nhóm 10 Khách hàng có doanh thu thấp nhất (Cần lưu ý thúc đẩy)",
+                labels={'Value': 'Doanh thu lũy kế (₫)', 'Khach_Hang': 'Khách hàng'},
+                color='Value',
+                color_continuous_scale=px.colors.sequential.Reds
+            )
+            fig_bottom.update_traces(
+                texttemplate='%{text:,.0f} ₫',
+                textposition='outside',
+                hovertemplate="<b>Khách hàng:</b> %{y}<br><b>Doanh thu tích lũy:</b> %{x:,.0f} ₫<extra></extra>"
+            )
+            fig_bottom.update_layout(
+                coloraxis_showscale=False,
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)',
+                font=dict(family="Montserrat", color="#1e293b"),
+                yaxis=dict(autorange="reversed")  # Sắp xếp từ thấp nhất ở phía trên cùng
+            )
+            st.plotly_chart(fig_bottom, use_container_width=True)
+            st.markdown("<br>", unsafe_allow_html=True)
+
+        # 4. Đẩy hộp tìm kiếm đa lựa chọn xuống dưới
         list_kh = sorted(customer_mapping['Khach_Hang'].unique().tolist())
         selected_kh = st.multiselect("Gõ tên hoặc chọn để tìm kiếm Khách Hàng (có thể chọn nhiều để so sánh):", list_kh)
         
