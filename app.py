@@ -97,7 +97,7 @@ st.markdown("""
     }
 
     /* -----------------------------------
-       2. SCALE LẠI HIỂN THỊ CÁC THẺ CARD LỚN GỌN GÀNG, THẨM MỸ HƠN
+       2. ĐỊNH DẠNG MẶC ĐỊNH CHO THẺ METRIC CỦA APP
        ----------------------------------- */
     div[data-testid="stMetric"] {
         background: linear-gradient(145deg, #fffdfa, #fdf4e7) !important; 
@@ -237,14 +237,15 @@ st.markdown("""
         overflow: visible !important;
     }
 
-    /* STICKY HERO SECTION TỰ ĐỘNG TRÊN NỀN SÁNG */
-    div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stMetric"]) {
+    /* ĐẢM BẢO KHÔNG BỊ GIỚI HẠN HIỂN THỊ TOOLTIP: Ép khối sticky cho phép hiển thị tràn viền (Mục 2) */
+    div[data-testid="stVerticalBlock"] > div:has(div.custom-hero-card) {
         position: sticky;
         top: 2.8rem;
-        z-index: 999;
+        z-index: 99999 !important; /* Gán mốc Z-index tuyệt đối cho thanh sticky */
         background-color: #ffffff;
         padding: 10px 0 20px 0;
         border-bottom: 1px solid #e2e8f0;
+        overflow: visible !important; /* Cho phép các thành phần bên trong tràn tự do ra ngoài */
     }
 
     /* -----------------------------------
@@ -297,7 +298,7 @@ st.markdown("""
     .smart-card-error { background: #fef2f2 !important; border-left: 5px solid #ef4444 !important; padding: 22px; border-radius: 12px; color: #7f1d1d !important; margin-bottom: 18px; box-shadow: 0 4px 12px rgba(239,68,68,0.08); border-top: 1px solid rgba(239,68,68,0.1); }
     .smart-card-warning { background: #fffbeb !important; border-left: 5px solid #f59e0b !important; padding: 22px; border-radius: 12px; color: #78350f !important; margin-bottom: 18px; box-shadow: 0 4px 12px rgba(245,158,11,0.08); border-top: 1px solid rgba(245,158,11,0.1); }
 
-    /* THẺ HERO CARD TÙY BIẾN CHO S2S BÌNH QUÂN CÓ HOVER TOOLTIP (ĐÃ PHÁT TRIỂN CHÚC XUỐNG DƯỚI NỔI TRÊN TABS - Mục 2) */
+    /* THẺ HERO CARD TÙY BIẾN CHO PHẦN THỐNG KÊ LỚN (ĐÃ CHO PHÉP TOOLTIP CHÚC XUỐNG DƯỚI VÀ HIỂN THỊ NỔI - Mục 2) */
     .custom-hero-card {
         background: linear-gradient(145deg, #fffdfa, #fdf4e7) !important; 
         border-radius: 16px !important;
@@ -335,14 +336,14 @@ st.markdown("""
         border-radius: 12px;
         padding: 15px;
         position: absolute;
-        z-index: 999999 !important; /* Thiết lập mốc z-index cực đại */
-        top: 105%; /* Chuyển tooltip chúc xuống phía dưới để tránh chạm trần Header bar */
+        z-index: 999999 !important; /* Đẩy lớp hiển thị lên cao nhất để không bị đè */
+        top: 105%; /* Chuyển thành hiển thị chúc xuống dưới để tránh bị che bởi Header bar */
         bottom: auto;
         left: 50%;
         margin-left: -150px;
         opacity: 0;
         transition: opacity 0.2s, visibility 0.2s;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.25); /* Bóng đổ hướng xuống dưới */
         font-size: 12px;
         font-weight: 500;
         line-height: 1.5;
@@ -696,10 +697,25 @@ try:
     st.markdown("<h2 style='font-weight: 900; margin-bottom: 5px; color: #0f172a;'>HỆ THỐNG QUẢN TRỊ KHO & GIÁM SÁT CUNG ỨNG</h2>", unsafe_allow_html=True)
     
     m1, m2, m3, m4 = st.columns(4)
-    m1.metric("TỔNG VỐN TỒN KHO", f"{df['Ton_Kho_Value'].sum():,.0f} ₫")
-    m2.metric("SỐ LƯỢNG SKU", f"{len(df):,}")
     
-    # Thiết kế lại m3 sử dụng thẻ HTML có tích hợp Tooltip (Đuy tooltip lên trên đầu)
+    # ĐỒNG BỘ TOÀN BỘ 4 CARD BẰNG THẺ HTML TÙY BIẾN ĐỂ TRÁNH LỖI LỆCH HÀNG (Mục 2)
+    with m1:
+        st.markdown(f"""
+        <div class="custom-hero-card">
+            <div class="hero-label">TỔNG VỐN TỒN KHO</div>
+            <div class="hero-value">{df['Ton_Kho_Value'].sum():,.0f} ₫</div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    with m2:
+        st.markdown(f"""
+        <div class="custom-hero-card">
+            <div class="hero-label">SỐ LƯỢNG SKU</div>
+            <div class="hero-value">{len(df):,}</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # Thiết kế lại m3 sử dụng thẻ HTML có tích hợp Tooltip (ĐÃ CHO PHÉP TOOLTIP CHÚC XUỐNG DƯỚI VÀ HIỂN THỊ NỔI - Mục 2)
     with m3:
         st.markdown(f"""
         <div class="custom-hero-card">
@@ -714,7 +730,13 @@ try:
         </div>
         """, unsafe_allow_html=True)
         
-    m4.metric("KHÁCH HÀNG CÓ GIAO DỊCH", f"{int(total_active_customers_clean):,}")
+    with m4:
+        st.markdown(f"""
+        <div class="custom-hero-card">
+            <div class="hero-label">KHÁCH HÀNG CÓ GIAO DỊCH</div>
+            <div class="hero-value">{int(total_active_customers_clean):,}</div>
+        </div>
+        """, unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
     
@@ -1041,7 +1063,7 @@ try:
                     other_tx_lines.append(f"• <b>{r_sku}</b> — <b>{r_brand}</b> — <b>{r_dvt}</b> — <b>{r_val:,.0f} ₫</b> (Tháng {r_month})")
                 other_tx_html = "<br>".join(other_tx_lines) if other_tx_lines else "Không có giao dịch tiêu biểu khác"
 
-                # Hiển thị cấu trúc mô tả chi tiết giao dịch đúng tiêu đề phân lớp (Mục 1)
+                # Trả lại tiêu đề các phần của hộp đánh giá khách hàng (Mục 1)
                 st.markdown(f"""
                 <div class="smart-card-success">
                     <b style="color:#15803d; font-size:16px;">📊 ĐÁNH GIÁ KHÁCH HÀNG:</b><br><br>
