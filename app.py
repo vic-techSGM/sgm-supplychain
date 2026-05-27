@@ -378,13 +378,29 @@ def clean_vietnamese_number(val):
     except:
         return 0.0
 
-# --- THUẬT TOÁN CHUẨN HÓA UNICODE TIẾNG VIỆT ĐỒNG BỘ GROUPBY ---
-def normalize_vietnamese_text(text):
+# --- THUẬT TOÁN CHUẨN HÓA UNICODE TIẾNG VIỆT & LỌC SAI LỖI CHÍNH TẢ TỪNG DÒNG EXCEL (Mục 1 & 2) ---
+def clean_customer_name(text):
     if pd.isna(text):
         return ""
-    # Chuyển đổi khoảng trắng kép dư thừa thành khoảng trắng đơn và đưa về chuẩn NFC
+    # Chuẩn hóa khoảng cách và định dạng NFC chuẩn của hệ thống tiếng Việt
     s = " ".join(str(text).split())
-    return unicodedata.normalize('NFC', s)
+    s_norm = unicodedata.normalize('NFC', s)
+    
+    # Khai báo bộ từ điển ánh xạ chuẩn hóa chính tả đặc hiệu cho dữ liệu gốc (Hợp nhất Hoàng Oánh & Medilab)
+    typo_dict = {
+        "hoaàng oánh": "Hoàng Oánh",
+        "hoàng oánh": "Hoàng Oánh",
+        "hoàng oanh": "Hoàng Oánh",
+        "medilâb": "Medilab",
+        "medilab": "Medilab",
+        "tbyt linhken": "TBYT Linhken"
+    }
+    
+    s_lower = s_norm.lower()
+    if s_lower in typo_dict:
+        return typo_dict[s_lower]
+        
+    return s_norm
 
 # ==========================================
 # 2. HỆ THỐNG XỬ LÝ DỮ LIỆU CHUẨN HÓA
@@ -444,13 +460,13 @@ def load_data():
     df_th = df_th.dropna(subset=['SKU'])
     
     # Áp dụng chuẩn hóa Unicode NFC chống trùng lặp nhóm
-    df_th['SKU'] = df_th['SKU'].apply(normalize_vietnamese_text)
+    df_th['SKU'] = df_th['SKU'].apply(clean_customer_name)
     
     for col in ['Nganh_Hang', 'Chung_Loai', 'Hang']:
         if col in df_th.columns: 
-            df_th[col] = df_th[col].fillna('Khác').astype(str).str.strip().apply(normalize_vietnamese_text)
+            df_th[col] = df_th[col].fillna('Khác').astype(str).str.strip().apply(clean_customer_name)
             
-    df_th['DVT'] = df_th['DVT'].fillna('Cái').astype(str).str.strip().apply(normalize_vietnamese_text)
+    df_th['DVT'] = df_th['DVT'].fillna('Cái').astype(str).str.strip().apply(clean_customer_name)
     
     for col in ['Xuat_Ban_SL', 'Ton_Kho_SL', 'Ton_Kho_Value', 'Het_HSD_Value']:
         if col in df_th.columns: 
@@ -489,14 +505,14 @@ def load_data():
         val_col_name: 'Value'
     }, inplace=True)
     
-    # Áp dụng chuẩn hóa Unicode NFC chống trùng lặp nhóm cho toàn bộ Khách hàng
-    df_xb_clean['Khach_Hang'] = df_xb_clean['Khach_Hang'].apply(normalize_vietnamese_text)
-    df_xb_clean['SKU'] = df_xb_clean['SKU'].apply(normalize_vietnamese_text)
+    # Áp dụng chuẩn hóa Unicode và lọc sạch lỗi chính tả cho cột Khách hàng (Mục 2)
+    df_xb_clean['Khach_Hang'] = df_xb_clean['Khach_Hang'].apply(clean_customer_name)
+    df_xb_clean['SKU'] = df_xb_clean['SKU'].apply(clean_customer_name)
     
     # Loại bỏ các dòng ghi chú tổng hợp trống
     df_xb_clean = df_xb_clean[df_xb_clean['Khach_Hang'] != '']
     
-    # SỬA LỖI MẤT DỮ LIỆU: Chuẩn hóa gộp nhóm không phân biệt hoa thường để tránh Hoàng Oánh bị chia tách (Mục 2)
+    # SỬA LỖI MẤT DỮ LIỆU: Chuẩn hóa gộp nhóm không phân biệt hoa thường để tránh Hoàng Oánh bị chia tách
     df_xb_clean['Khach_Hang_Lower'] = df_xb_clean['Khach_Hang'].str.lower()
     proper_case_map = df_xb_clean.groupby('Khach_Hang_Lower')['Khach_Hang'].first().to_dict()
     df_xb_clean['Khach_Hang'] = df_xb_clean['Khach_Hang_Lower'].map(proper_case_map)
@@ -505,7 +521,7 @@ def load_data():
     df_xb_clean['Value'] = df_xb_clean['Value'].apply(clean_vietnamese_number)
     df_xb_clean['Quantity'] = df_xb_clean['Quantity'].apply(clean_vietnamese_number)
 
-    # --- SỬA LỖI LỌC DỮ LIỆU THÁNG GIAO DỊCH (Mục 1 & 2) ---
+    # --- SỬA LỖI LỌC DỮ LIỆU THÁNG GIAO DỊCH (Cho phép đọc chuỗi text "Tháng xx/yyyy") ---
     thang_cols = [c for c in df_xb_raw.columns if 'Tháng' in str(c)]
     if thang_cols:
         thang_col_name = thang_cols[0]
@@ -517,7 +533,7 @@ def load_data():
                 return pd.to_datetime(val)
                 
             val_str = str(val).strip().lower()
-            # Loại bỏ chữ "tháng" hoặc khoảng trắng thừa trong chuỗi text (Mục 1 & 2)
+            # Loại bỏ chữ "tháng" hoặc khoảng trắng thừa trong chuỗi text
             val_str = val_str.replace('tháng', '').replace('thang', '').strip()
             try:
                 if '/' in val_str:
@@ -925,7 +941,7 @@ try:
                 if not monthly_totals_html:
                     monthly_totals_html = "Chưa ghi nhận dữ liệu doanh thu"
 
-                # Ánh xạ lấy Hãng sản xuất và ĐVT tương ứng từ bảng Tổng hợp
+                # Ánh xạ lấy Hãng và ĐVT tương ứng từ bảng Tổng hợp
                 sku_brand_map = df.set_index('SKU')['Hang'].to_dict()
                 sku_dvt_map = df.set_index('SKU')['DVT'].to_dict()
 
@@ -964,7 +980,7 @@ try:
                 top_5_skus = sku_stats.head(5)['SKU'].tolist()
                 top_5_html = "<br>".join(top_5_skus) if top_5_skus else "Chưa ghi nhận"
 
-                # Hiển thị khối 3 Thẻ thông số (Customer Insight Cards)
+                # Hiển thị khối 3 thẻ thông số (Customer Insight Cards)
                 col_c1, col_c2, col_c3 = st.columns(3)
                 with col_c1:
                     st.markdown(f"""
@@ -1015,18 +1031,17 @@ try:
                     r_dvt = sku_dvt_map.get(r_sku, row['DVT_Xuat'])
                     r_val = row['Value']
                     r_month = row['Date_Filter'].strftime('%m/%Y')
-                    # Định dạng hiển thị sạch: Tên SKU — Hãng sản xuất — Đơn vị tính — Giá trị giao dịch (Tháng đặt hàng)
+                    # Đưa về định dạng chuẩn hoá 4 thuộc tính: Tên SKU — Hãng sản xuất — Đơn vị tính — Giá trị giao dịch (Tháng đặt hàng) (Mục 1)
                     other_tx_lines.append(f"<b>{r_sku}</b> — <b>{r_brand}</b> — <b>{r_dvt}</b> — <b>{r_val:,.0f} ₫</b> (Tháng {r_month})")
                 other_tx_html = "<br>".join(other_tx_lines) if other_tx_lines else "Không có giao dịch tiêu biểu khác"
 
-                # Hiển thị cấu trúc mô tả chi tiết giao dịch không nhãn thừa (Mục 1)
+                # Hiển thị cấu trúc mô tả chi tiết giao dịch theo chuẩn hoá cấu trúc phẳng (Mục 1)
                 st.markdown(f"""
                 <div class="smart-card-success">
                     <b style="color:#15803d; font-size:16px;">📊 ĐÁNH GIÁ KHÁCH HÀNG:</b><br><br>
                     • Khách hàng <b>{cust}</b> đem lại doanh thu lũy kế <b>{total_cust_spend:,.0f} ₫</b> trên tổng số <b>{cust_skus_count} mã SKU</b>.<br><br>
                     • <b>{largest_sku}</b> — <b>{largest_brand}</b> — <b>{largest_dvt}</b> — <b>{largest_val:,.0f} ₫</b> (Tháng {largest_month}).<br><br>
-                    • <b>Các giao dịch tiêu biểu khác:</b><br>
-                    {other_tx_html}
+                    • {other_tx_html}
                 </div>
                 """, unsafe_allow_html=True)
                 
