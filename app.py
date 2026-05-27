@@ -723,8 +723,7 @@ try:
             <div class="hero-value">{avg_s2s_global:.1f} Tháng</div>
             <div class="tooltip-hero">
                 <strong style="color: #fb923c; font-size: 13px;">Chỉ số S2S (Stock-to-Sales) Bình quân:</strong><br><br>
-                • <b>Định nghĩa S2S:</b> Biểu thị số tháng cần thiết để phân phối hết lượng hàng hóa đang lưu kho thực tế dựa trên tốc độ tiêu thụ hiện tại.<br>
-                • <b>Thuật toán:</b> Bằng Tổng sản lượng tồn kho của toàn bộ hệ thống chia cho Tổng doanh số bán hàng trung bình mỗi tháng.<br>
+                • <b>Biểu thị số tháng cần thiết để phân phối hết lượng hàng hóa đang lưu kho thực tế dựa trên tốc độ tiêu thụ hiện tại.<br>
                 • <b>Ý nghĩa điều phối:</b> Hỗ trợ nhà quản trị nhận định nhanh thời gian quay vòng của toàn bộ nguồn vốn đang lưu chuyển trong kho.
             </div>
         </div>
