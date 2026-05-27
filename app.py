@@ -232,6 +232,11 @@ st.markdown("""
         color: #0f172a !important;
     }
 
+    /* GIẢI QUYẾT LỖI CẮT KHỐI: Ép toàn bộ container Metric hỗ trợ hiển thị tràn viền cho Tooltip nổi lên trên các lớp */
+    [data-testid="column"], [data-testid="stMetric"], .custom-hero-card {
+        overflow: visible !important;
+    }
+
     /* STICKY HERO SECTION TỰ ĐỘNG TRÊN NỀN SÁNG */
     div[data-testid="stVerticalBlock"] > div:has(div[data-testid="stMetric"]) {
         position: sticky;
@@ -292,7 +297,7 @@ st.markdown("""
     .smart-card-error { background: #fef2f2 !important; border-left: 5px solid #ef4444 !important; padding: 22px; border-radius: 12px; color: #7f1d1d !important; margin-bottom: 18px; box-shadow: 0 4px 12px rgba(239,68,68,0.08); border-top: 1px solid rgba(239,68,68,0.1); }
     .smart-card-warning { background: #fffbeb !important; border-left: 5px solid #f59e0b !important; padding: 22px; border-radius: 12px; color: #78350f !important; margin-bottom: 18px; box-shadow: 0 4px 12px rgba(245,158,11,0.08); border-top: 1px solid rgba(245,158,11,0.1); }
 
-    /* THẺ HERO CARD TÙY BIẾN CHO S2S BÌNH QUÂN CÓ HOVER TOOLTIP (LUÔN BAY LÊN TRÊN CARD) */
+    /* THẺ HERO CARD TÙY BIẾN CHO S2S BÌNH QUÂN CÓ HOVER TOOLTIP (ĐÃ PHÁT TRIỂN CHÚC XUỐNG DƯỚI NỔI TRÊN TABS - Mục 2) */
     .custom-hero-card {
         background: linear-gradient(145deg, #fffdfa, #fdf4e7) !important; 
         border-radius: 16px !important;
@@ -330,13 +335,14 @@ st.markdown("""
         border-radius: 12px;
         padding: 15px;
         position: absolute;
-        z-index: 99999 !important; /* Đẩy lớp hiển thị lên cao nhất để không bị đè */
-        bottom: 115%; /* Chuyển thành hiển thị bay lên trên Card */
+        z-index: 999999 !important; /* Thiết lập mốc z-index cực đại */
+        top: 105%; /* Chuyển tooltip chúc xuống phía dưới để tránh chạm trần Header bar */
+        bottom: auto;
         left: 50%;
         margin-left: -150px;
         opacity: 0;
         transition: opacity 0.2s, visibility 0.2s;
-        box-shadow: 0 -10px 25px rgba(0,0,0,0.25); /* Bóng đổ hướng lên trên */
+        box-shadow: 0 10px 25px rgba(0,0,0,0.25);
         font-size: 12px;
         font-weight: 500;
         line-height: 1.5;
@@ -378,7 +384,7 @@ def clean_vietnamese_number(val):
     except:
         return 0.0
 
-# --- THUẬT TOÁN CHUẨN HÓA UNICODE TIẾNG VIỆT & LỌC SAI LỖI CHÍNH TẢ TỪNG DÒNG EXCEL (Mục 1 & 2) ---
+# --- THUẬT TOÁN CHUẨN HÓA UNICODE TIẾNG VIỆT & LỌC SAI LỖI CHÍNH TẢ TỪNG DÒNG EXCEL ---
 def clean_customer_name(text):
     if pd.isna(text):
         return ""
@@ -505,7 +511,7 @@ def load_data():
         val_col_name: 'Value'
     }, inplace=True)
     
-    # Áp dụng chuẩn hóa Unicode và lọc sạch lỗi chính tả cho cột Khách hàng (Mục 2)
+    # Áp dụng chuẩn hóa Unicode và lọc sạch lỗi chính tả cho cột Khách hàng
     df_xb_clean['Khach_Hang'] = df_xb_clean['Khach_Hang'].apply(clean_customer_name)
     df_xb_clean['SKU'] = df_xb_clean['SKU'].apply(clean_customer_name)
     
@@ -913,7 +919,7 @@ try:
         if not selected_kh:
             st.info("Vui lòng gõ tên hoặc chọn ít nhất một Khách Hàng từ hộp tìm kiếm phía trên để hiển thị phân tích dữ liệu.")
 
-        # --- THUẬT TOÁN HIỂN THỊ CHI TIẾT KHI CHỌN DUY NHẤT 1 KHÁCH HÀNG (Chuẩn hóa thông tin hiển thị 4 thuộc tính - Mục 1 & 2) ---
+        # --- THUẬT TOÁN HIỂN THỊ CHI TIẾT KHI CHỌN DUY NHẤT 1 KHÁCH HÀNG (Chuẩn hóa thông tin hiển thị 4 thuộc tính) ---
         elif len(selected_kh) == 1:
             cust = selected_kh[0]
             cust_tx = df_xb_clean[df_xb_clean['Khach_Hang'] == cust].copy()
@@ -1031,17 +1037,18 @@ try:
                     r_dvt = sku_dvt_map.get(r_sku, row['DVT_Xuat'])
                     r_val = row['Value']
                     r_month = row['Date_Filter'].strftime('%m/%Y')
-                    # Đưa về định dạng chuẩn hoá 4 thuộc tính: Tên SKU — Hãng sản xuất — Đơn vị tính — Giá trị giao dịch (Tháng đặt hàng) (Mục 1)
-                    other_tx_lines.append(f"<b>{r_sku}</b> — <b>{r_brand}</b> — <b>{r_dvt}</b> — <b>{r_val:,.0f} ₫</b> (Tháng {r_month})")
+                    # Đưa về định dạng chuẩn hoá 4 thuộc tính dẹt (Mục 1)
+                    other_tx_lines.append(f"• <b>{r_sku}</b> — <b>{r_brand}</b> — <b>{r_dvt}</b> — <b>{r_val:,.0f} ₫</b> (Tháng {r_month})")
                 other_tx_html = "<br>".join(other_tx_lines) if other_tx_lines else "Không có giao dịch tiêu biểu khác"
 
-                # Hiển thị cấu trúc mô tả chi tiết giao dịch theo chuẩn hoá cấu trúc phẳng (Mục 1)
+                # Hiển thị cấu trúc mô tả chi tiết giao dịch đúng tiêu đề phân lớp (Mục 1)
                 st.markdown(f"""
                 <div class="smart-card-success">
                     <b style="color:#15803d; font-size:16px;">📊 ĐÁNH GIÁ KHÁCH HÀNG:</b><br><br>
-                    • Khách hàng <b>{cust}</b> đem lại doanh thu lũy kế <b>{total_cust_spend:,.0f} ₫</b> trên tổng số <b>{cust_skus_count} mã SKU</b>.<br><br>
-                    • <b>{largest_sku}</b> — <b>{largest_brand}</b> — <b>{largest_dvt}</b> — <b>{largest_val:,.0f} ₫</b> (Tháng {largest_month}).<br><br>
-                    • {other_tx_html}
+                    • <b>1. Tổng doanh thu:</b> Khách hàng <b>{cust}</b> đem lại doanh thu lũy kế <b>{total_cust_spend:,.0f} ₫</b> trên tổng số <b>{cust_skus_count} mã SKU</b>.<br><br>
+                    • <b>2. SKU có giá trị cao nhất:</b> <b>{largest_sku}</b> — <b>{largest_brand}</b> — <b>{largest_dvt}</b> — <b>{largest_val:,.0f} ₫</b> (Tháng {largest_month}).<br><br>
+                    • <b>3. Các SKU tiêu biểu khác:</b><br>
+                    {other_tx_html}
                 </div>
                 """, unsafe_allow_html=True)
                 
